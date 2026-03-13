@@ -236,6 +236,30 @@
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
+      flex: 1;
+      min-width: 0;
+    }
+
+    .file-preview-remove {
+      flex-shrink: 0;
+      width: 28px;
+      height: 28px;
+      border: none;
+      border-radius: 6px;
+      background: var(--border);
+      color: var(--text-muted);
+      font-size: 1.1rem;
+      line-height: 1;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.2s;
+    }
+
+    .file-preview-remove:hover {
+      background: var(--error);
+      color: white;
     }
 
     .form-group select,
@@ -884,6 +908,21 @@
     });
     fileInput.addEventListener('change', updateFileName);
 
+    function escapeHtml(s) {
+      const div = document.createElement('div');
+      div.textContent = s;
+      return div.innerHTML;
+    }
+
+    function removeFileAtIndex(index) {
+      const files = [...fileInput.files];
+      if (index < 0 || index >= files.length) return;
+      const dt = new DataTransfer();
+      files.forEach((f, i) => { if (i !== index) dt.items.add(f); });
+      fileInput.files = dt.files;
+      updateFileName();
+    }
+
     function updateFilePreview() {
       const preview = document.getElementById('filePreview');
       if (preview._urls) {
@@ -899,15 +938,18 @@
         const item = document.createElement('div');
         item.className = 'file-preview-item';
         if (isVideoFile(file)) {
-          item.innerHTML = `<div class="file-preview-thumb video-placeholder">🎬</div><span class="file-preview-name">${file.name}</span>`;
+          item.innerHTML = `<div class="file-preview-thumb video-placeholder">🎬</div><span class="file-preview-name">${escapeHtml(file.name)}</span><button type="button" class="file-preview-remove" data-index="${i}" title="削除">×</button>`;
         } else {
           const url = URL.createObjectURL(file);
           urls.push(url);
-          item.innerHTML = `<img class="file-preview-thumb" src="${url}" alt=""><span class="file-preview-name">${file.name}</span>`;
+          item.innerHTML = `<img class="file-preview-thumb" src="${url}" alt=""><span class="file-preview-name">${escapeHtml(file.name)}</span><button type="button" class="file-preview-remove" data-index="${i}" title="削除">×</button>`;
         }
         preview.appendChild(item);
       });
       preview._urls = urls;
+      preview.querySelectorAll('.file-preview-remove').forEach(btn => {
+        btn.addEventListener('click', () => removeFileAtIndex(parseInt(btn.dataset.index)));
+      });
     }
 
     function updateFileName() {
