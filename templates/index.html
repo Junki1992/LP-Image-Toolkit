@@ -1,0 +1,1019 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>画像処理ツール</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+  <style>
+    :root {
+      --bg: #0f0f12;
+      --surface: #1a1a1f;
+      --surface-hover: #222228;
+      --border: #2a2a32;
+      --text: #e8e8ed;
+      --text-muted: #8888a0;
+      --accent: #6366f1;
+      --accent-hover: #818cf8;
+      --success: #22c55e;
+      --error: #ef4444;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: 'Outfit', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      line-height: 1.6;
+    }
+
+    .container {
+      max-width: 560px;
+      margin: 0 auto;
+      padding: 2rem 1.5rem;
+    }
+
+    header {
+      text-align: center;
+      margin-bottom: 2.5rem;
+    }
+
+    h1 {
+      font-size: 1.75rem;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      background: linear-gradient(135deg, #fff 0%, #a5b4fc 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .subtitle {
+      color: var(--text-muted);
+      font-size: 0.9rem;
+      margin-top: 0.25rem;
+    }
+
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 1.5rem;
+      margin-bottom: 1.5rem;
+    }
+
+    .card h2 {
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-bottom: 1rem;
+    }
+
+    .upload-zone {
+      border: 2px dashed var(--border);
+      border-radius: 12px;
+      padding: 2rem;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.2s;
+      background: rgba(99, 102, 241, 0.03);
+    }
+
+    .upload-zone:hover, .upload-zone.dragover {
+      border-color: var(--accent);
+      background: rgba(99, 102, 241, 0.08);
+    }
+
+    .upload-zone input {
+      display: none;
+    }
+
+    .upload-zone p {
+      color: var(--text-muted);
+      font-size: 0.9rem;
+    }
+
+    .upload-zone .hint {
+      margin-top: 0.5rem;
+      font-size: 0.8rem;
+      opacity: 0.8;
+    }
+
+    .file-name {
+      margin-top: 0.75rem;
+      font-size: 0.9rem;
+      color: var(--accent);
+      font-weight: 500;
+    }
+
+    .mode-tabs {
+      display: flex;
+      gap: 0.5rem;
+      margin-bottom: 1rem;
+    }
+
+    .mode-tab {
+      flex: 1;
+      padding: 0.75rem 1rem;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      background: transparent;
+      color: var(--text-muted);
+      font-family: inherit;
+      font-size: 0.9rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .mode-tab:hover {
+      background: var(--surface-hover);
+      color: var(--text);
+    }
+
+    .mode-tab.active {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: white;
+    }
+
+    .options {
+      display: none;
+    }
+
+    .options.active {
+      display: block;
+    }
+
+    .form-group {
+      margin-bottom: 1rem;
+    }
+
+    .form-group:last-child {
+      margin-bottom: 0;
+    }
+
+    .form-group label {
+      display: block;
+      font-size: 0.85rem;
+      font-weight: 500;
+      color: var(--text-muted);
+      margin-bottom: 0.4rem;
+    }
+
+    .form-hint {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      opacity: 0.8;
+      margin-top: 0.35rem;
+    }
+
+    .output-mp4-badge {
+      display: inline-block;
+      padding: 0.5rem 1rem;
+      background: rgba(99, 102, 241, 0.2);
+      color: var(--accent);
+      border-radius: 8px;
+      font-weight: 600;
+      font-size: 0.9rem;
+    }
+
+    .file-preview {
+      display: none;
+      margin-top: 1rem;
+      padding-top: 1rem;
+      border-top: 1px solid var(--border);
+    }
+
+    .file-preview.visible {
+      display: block;
+    }
+
+    .file-preview-item {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      padding: 0.5rem 0;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .file-preview-item:last-child {
+      border-bottom: none;
+    }
+
+    .file-preview-thumb {
+      width: 48px;
+      height: 48px;
+      min-width: 48px;
+      border-radius: 6px;
+      object-fit: cover;
+      background: var(--surface);
+    }
+
+    .file-preview-thumb.video-placeholder {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: var(--surface);
+      color: var(--text-muted);
+      font-size: 0.65rem;
+    }
+
+    .file-preview-name {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .form-group select,
+    .form-group input[type="number"] {
+      width: 100%;
+      padding: 0.65rem 0.9rem;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      background: var(--bg);
+      color: var(--text);
+      font-family: inherit;
+      font-size: 0.9rem;
+    }
+
+    .form-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1rem;
+    }
+
+    .size-mode-toggle {
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+    }
+
+    .toggle-option {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      cursor: pointer;
+      padding: 0.5rem 0;
+      font-size: 0.9rem;
+    }
+
+    .toggle-option input {
+      width: auto;
+    }
+
+    .advanced-toggle {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      color: var(--text-muted);
+      font-size: 0.85rem;
+      cursor: pointer;
+      margin-top: 0.75rem;
+      padding: 0.25rem 0;
+    }
+
+    .advanced-toggle:hover {
+      color: var(--accent);
+    }
+
+    .advanced-toggle .arrow {
+      transition: transform 0.2s;
+    }
+
+    .advanced-toggle.open .arrow {
+      transform: rotate(90deg);
+    }
+
+    .advanced-opts {
+      display: none;
+      margin-top: 1rem;
+      padding-top: 1rem;
+      border-top: 1px solid var(--border);
+    }
+
+    .advanced-opts.visible {
+      display: block;
+    }
+
+    .btn {
+      width: 100%;
+      padding: 1rem 1.5rem;
+      border: none;
+      border-radius: 12px;
+      font-family: inherit;
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+    }
+
+    .btn-primary {
+      background: var(--accent);
+      color: white;
+    }
+
+    .btn-primary:hover:not(:disabled) {
+      background: var(--accent-hover);
+      transform: translateY(-1px);
+    }
+
+    .btn-primary:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+
+    .btn .spinner {
+      width: 20px;
+      height: 20px;
+      border: 2px solid rgba(255,255,255,0.3);
+      border-top-color: white;
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    .processing-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(15, 15, 18, 0.9);
+      z-index: 100;
+      align-items: center;
+      justify-content: center;
+      flex-direction: column;
+      gap: 1.5rem;
+    }
+
+    .processing-overlay.visible {
+      display: flex;
+    }
+
+    .progress-container {
+      width: 100%;
+      max-width: 400px;
+      max-height: 70vh;
+      overflow-y: auto;
+    }
+
+    .progress-item {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      padding: 0.75rem 0;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .progress-item:last-child {
+      border-bottom: none;
+    }
+
+    .progress-thumb {
+      width: 56px;
+      height: 56px;
+      min-width: 56px;
+      border-radius: 8px;
+      object-fit: cover;
+      background: var(--surface);
+    }
+
+    .progress-thumb.video-placeholder {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: var(--surface);
+      color: var(--text-muted);
+      font-size: 0.7rem;
+    }
+
+    .progress-item-content {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .progress-item-name {
+      font-size: 0.85rem;
+      color: var(--text);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      margin-bottom: 0.35rem;
+    }
+
+    .progress-bar-wrap {
+      height: 6px;
+      background: var(--border);
+      border-radius: 3px;
+      overflow: hidden;
+    }
+
+    .progress-bar-fill {
+      height: 100%;
+      background: linear-gradient(90deg, var(--accent), #818cf8);
+      border-radius: 3px;
+      transition: width 0.3s ease;
+    }
+
+    .progress-text {
+      color: var(--text-muted);
+      font-size: 0.85rem;
+      text-align: center;
+      margin-top: 1rem;
+    }
+
+    .processing-text {
+      color: var(--text-muted);
+      font-size: 1rem;
+      margin-top: 1rem;
+    }
+
+    .btn-cancel {
+      margin-top: 1rem;
+      padding: 0.6rem 1.5rem;
+      background: transparent;
+      border: 1px solid var(--border);
+      color: var(--text-muted);
+      border-radius: 8px;
+      font-family: inherit;
+      font-size: 0.9rem;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .btn-cancel:hover {
+      border-color: var(--error);
+      color: var(--error);
+    }
+
+    .btn-download {
+      background: var(--success);
+      color: white;
+    }
+
+    .btn-download:hover {
+      background: #16a34a;
+      transform: translateY(-1px);
+    }
+
+    .message {
+      margin-top: 1rem;
+      padding: 0.75rem 1rem;
+      border-radius: 8px;
+      font-size: 0.9rem;
+      display: none;
+    }
+
+    .message.error {
+      background: rgba(239, 68, 68, 0.15);
+      color: var(--error);
+      display: block;
+    }
+
+    .message.success {
+      background: rgba(34, 197, 94, 0.15);
+      color: var(--success);
+      display: block;
+    }
+
+    footer {
+      text-align: center;
+      margin-top: 2rem;
+      color: var(--text-muted);
+      font-size: 0.8rem;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>画像処理ツール</h1>
+      <p class="subtitle">アップスケール・形式変換・軽量化（画像・動画）</p>
+    </header>
+
+    <form id="form">
+      <div class="card">
+        <h2>ファイルを選択</h2>
+        <div class="upload-zone" id="uploadZone">
+          <input type="file" id="fileInput" name="file" accept="image/png,image/jpeg,image/webp,image/bmp,video/mp4,video/quicktime,video/x-msvideo,video/x-matroska,video/webm" multiple>
+          <p>ドラッグ＆ドロップ または クリックして選択</p>
+          <p class="hint">画像: PNG, JPG, WebP, BMP / 動画: MP4, MOV（軽量化のみ）</p>
+          <p class="file-name" id="fileName"></p>
+        </div>
+        <div id="filePreview" class="file-preview"></div>
+      </div>
+
+      <div class="card">
+        <h2>処理モード</h2>
+        <div class="mode-tabs">
+          <button type="button" class="mode-tab" data-mode="convert">形式変換</button>
+          <button type="button" class="mode-tab" data-mode="optimize">軽量化</button>
+          <button type="button" class="mode-tab" data-mode="upscale">アップスケール</button>
+        </div>
+
+        <input type="hidden" name="mode" id="modeInput" value="convert">
+
+        <div id="optionsConvert" class="options active">
+          <div class="form-group">
+            <label>出力形式</label>
+            <select name="output_format" data-mode="convert">
+              <option value="png">PNG</option>
+              <option value="jpg">JPEG</option>
+              <option value="webp">WebP</option>
+            </select>
+          </div>
+          <div class="advanced-toggle" data-target="advancedConvert">
+            <span class="arrow">▶</span>
+            <span>詳細設定</span>
+          </div>
+          <div id="advancedConvert" class="advanced-opts">
+            <div class="form-group">
+              <label>品質 (JPEG/WebP)</label>
+              <input type="number" name="quality" data-mode="convert" min="1" max="100" value="95">
+            </div>
+          </div>
+        </div>
+
+        <div id="optionsOptimize" class="options">
+          <div class="form-group">
+            <label class="toggle-option" style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer; padding: 0.5rem 0;">
+              <input type="checkbox" name="optimize_video" id="optimizeVideoCheck">
+              <span>動画（MP4）を軽量化する</span>
+            </label>
+          </div>
+          <div id="optimizeImageFormat" class="form-group">
+            <label>出力形式</label>
+            <select name="output_format" data-mode="optimize">
+              <option value="jpg">JPEG（推奨）</option>
+              <option value="png">PNG</option>
+              <option value="webp">WebP</option>
+            </select>
+          </div>
+          <div id="optimizeVideoFormat" class="form-group" style="display: none;">
+            <div class="output-mp4-badge">出力: MP4</div>
+          </div>
+          <div class="advanced-toggle" data-target="advancedOptimize">
+            <span class="arrow">▶</span>
+            <span>詳細設定</span>
+          </div>
+          <div id="advancedOptimize" class="advanced-opts">
+            <div class="form-group">
+              <label>サイズ指定</label>
+              <div class="size-mode-toggle">
+                <label class="toggle-option">
+                  <input type="radio" name="optimize_size_mode" value="auto" checked>
+                  <span>自動（長辺1920px以下）</span>
+                </label>
+                <label class="toggle-option">
+                  <input type="radio" name="optimize_size_mode" value="manual">
+                  <span>手動で指定</span>
+                </label>
+              </div>
+            </div>
+            <div id="manualSizeOpts" class="form-row" style="display: none;">
+              <div class="form-group">
+                <label>最大幅 (px)</label>
+                <input type="number" name="max_width" placeholder="例: 1200" min="1">
+              </div>
+              <div class="form-group">
+                <label>最大高さ (px)</label>
+                <input type="number" name="max_height" placeholder="例: 800" min="1">
+              </div>
+            </div>
+            <div class="form-group">
+              <label>品質 (JPEG/WebP)</label>
+              <input type="number" name="quality" data-mode="optimize" min="1" max="100" value="85">
+            </div>
+          </div>
+        </div>
+
+        <div id="optionsUpscale" class="options">
+          <div class="form-group">
+            <label>出力形式</label>
+            <select name="output_format" data-mode="upscale">
+              <option value="png">PNG</option>
+              <option value="jpg">JPEG</option>
+            </select>
+          </div>
+          <div class="advanced-toggle" data-target="advancedUpscale">
+            <span class="arrow">▶</span>
+            <span>詳細設定</span>
+          </div>
+          <div id="advancedUpscale" class="advanced-opts">
+            <div class="form-group">
+              <label>モード</label>
+              <select name="upscale_mode">
+                <option value="photo">写真</option>
+                <option value="anime">アニメ</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>倍率</label>
+              <select name="scale">
+                <option value="4">4倍</option>
+                <option value="2">2倍</option>
+              </select>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <button type="submit" class="btn btn-primary" id="submitBtn" disabled>
+          処理を実行
+        </button>
+        <button type="button" class="btn btn-download" id="downloadBtn" style="display: none; margin-top: 1rem;">
+          ⬇ ダウンロード
+        </button>
+        <div class="message" id="message"></div>
+      </div>
+    </form>
+
+    <div class="processing-overlay" id="processingOverlay">
+      <div class="progress-container" id="progressContainer">
+        <p class="progress-text"><span id="progressCount">0</span> / <span id="progressTotal">0</span> 件</p>
+      </div>
+      <p class="processing-text">処理中...</p>
+      <button type="button" class="btn-cancel" id="cancelBtn">キャンセル</button>
+    </div>
+
+    <footer>
+      Real-ESRGAN ベースの画像処理ツール
+    </footer>
+  </div>
+
+  <script>
+    const uploadZone = document.getElementById('uploadZone');
+    const fileInput = document.getElementById('fileInput');
+    const fileName = document.getElementById('fileName');
+    const form = document.getElementById('form');
+    const submitBtn = document.getElementById('submitBtn');
+    const downloadBtn = document.getElementById('downloadBtn');
+    const message = document.getElementById('message');
+    const modeInput = document.getElementById('modeInput');
+    const processingOverlay = document.getElementById('processingOverlay');
+
+    let pendingDownload = null;
+    let currentAbortController = null;
+    let isCancelled = false;
+
+    document.getElementById('cancelBtn').addEventListener('click', () => {
+      if (currentAbortController) {
+        isCancelled = true;
+        currentAbortController.abort();
+      }
+    });
+
+    function isVideoFile(file) {
+      return /\.(mp4|mov|avi|mkv|webm)$/i.test(file.name) || (file.type && file.type.startsWith('video/'));
+    }
+
+    downloadBtn.addEventListener('click', () => {
+      if (pendingDownload) {
+        const { blob, filename } = pendingDownload;
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = filename;
+        a.click();
+        URL.revokeObjectURL(url);
+        pendingDownload = null;
+        downloadBtn.style.display = 'none';
+        submitBtn.disabled = !fileInput.files.length;
+      }
+    });
+
+    // モード切り替え
+    document.querySelectorAll('.mode-tab').forEach(tab => {
+      tab.addEventListener('click', () => {
+        document.querySelectorAll('.mode-tab').forEach(t => t.classList.remove('active'));
+        tab.classList.add('active');
+        const mode = tab.dataset.mode;
+        modeInput.value = mode;
+
+        document.querySelectorAll('.options').forEach(o => o.classList.remove('active'));
+        document.getElementById(`options${mode.charAt(0).toUpperCase() + mode.slice(1)}`).classList.add('active');
+      });
+    });
+
+    // 詳細設定の開閉
+    document.querySelectorAll('.advanced-toggle').forEach(toggle => {
+      toggle.addEventListener('click', () => {
+        const target = document.getElementById(toggle.dataset.target);
+        target.classList.toggle('visible');
+        toggle.classList.toggle('open');
+      });
+    });
+
+    // 軽量化: 動画チェックで出力形式を切り替え
+    document.getElementById('optimizeVideoCheck').addEventListener('change', (e) => {
+      const isVideo = e.target.checked;
+      document.getElementById('optimizeImageFormat').style.display = isVideo ? 'none' : 'block';
+      document.getElementById('optimizeVideoFormat').style.display = isVideo ? 'block' : 'none';
+    });
+
+    // 軽量化: 自動/手動の切り替え
+    document.querySelectorAll('input[name="optimize_size_mode"]').forEach(radio => {
+      radio.addEventListener('change', () => {
+        document.getElementById('manualSizeOpts').style.display =
+          radio.value === 'manual' ? 'grid' : 'none';
+      });
+    });
+
+    // ファイル選択
+    uploadZone.addEventListener('click', () => fileInput.click());
+    uploadZone.addEventListener('dragover', (e) => {
+      e.preventDefault();
+      uploadZone.classList.add('dragover');
+    });
+    uploadZone.addEventListener('dragleave', () => uploadZone.classList.remove('dragover'));
+    const IMAGE_TYPES = ['image/png', 'image/jpeg', 'image/webp', 'image/bmp'];
+    const VIDEO_TYPES = ['video/mp4', 'video/quicktime', 'video/x-msvideo', 'video/x-matroska', 'video/webm'];
+    const isImage = (f) => IMAGE_TYPES.includes(f.type) || /\.(png|jpe?g|webp|bmp)$/i.test(f.name);
+    const isVideo = (f) => VIDEO_TYPES.includes(f.type) || /\.(mp4|mov|avi|mkv|webm)$/i.test(f.name);
+    const isMedia = (f) => isImage(f) || isVideo(f);
+
+    async function collectFilesFromEntry(entry, files = []) {
+      if (entry.isFile) {
+        return new Promise((resolve) => {
+          entry.file((file) => {
+            if (isMedia(file)) files.push(file);
+            resolve(files);
+          });
+        });
+      }
+      if (entry.isDirectory) {
+        const reader = entry.createReader();
+        const readBatch = () => new Promise((resolve) => {
+          reader.readEntries(async (entries) => {
+            if (entries.length === 0) return resolve(files);
+            for (const e of entries) {
+              await collectFilesFromEntry(e, files);
+            }
+            resolve(await readBatch());
+          });
+        });
+        return readBatch();
+      }
+      return files;
+    }
+
+    uploadZone.addEventListener('drop', async (e) => {
+      e.preventDefault();
+      uploadZone.classList.remove('dragover');
+      const items = e.dataTransfer.items;
+      if (!items?.length) return;
+
+      let imageFiles = [];
+      for (const item of items) {
+        const entry = item.webkitGetAsEntry?.();
+        if (entry) {
+          await collectFilesFromEntry(entry, imageFiles);
+        } else {
+          const file = item.getAsFile();
+          if (file && isMedia(file)) imageFiles.push(file);
+        }
+      }
+
+      if (imageFiles.length === 0 && e.dataTransfer.files.length) {
+        imageFiles = [...e.dataTransfer.files].filter(isMedia);
+      }
+      if (imageFiles.length) {
+        const dt = new DataTransfer();
+        imageFiles.forEach(f => dt.items.add(f));
+        fileInput.files = dt.files;
+        submitBtn.disabled = false;
+        fileName.textContent = imageFiles.length > 1 ? `${imageFiles.length}件` : imageFiles[0].name;
+        updateFilePreview();
+      }
+    });
+    fileInput.addEventListener('change', updateFileName);
+
+    function updateFilePreview() {
+      const preview = document.getElementById('filePreview');
+      if (preview._urls) {
+        preview._urls.forEach(url => URL.revokeObjectURL(url));
+      }
+      preview.innerHTML = '';
+      preview.classList.remove('visible');
+      if (!fileInput.files.length) return;
+
+      preview.classList.add('visible');
+      const urls = [];
+      [...fileInput.files].forEach((file, i) => {
+        const item = document.createElement('div');
+        item.className = 'file-preview-item';
+        if (isVideoFile(file)) {
+          item.innerHTML = `<div class="file-preview-thumb video-placeholder">🎬</div><span class="file-preview-name">${file.name}</span>`;
+        } else {
+          const url = URL.createObjectURL(file);
+          urls.push(url);
+          item.innerHTML = `<img class="file-preview-thumb" src="${url}" alt=""><span class="file-preview-name">${file.name}</span>`;
+        }
+        preview.appendChild(item);
+      });
+      preview._urls = urls;
+    }
+
+    function updateFileName() {
+      if (fileInput.files.length) {
+        fileName.textContent = fileInput.files.length > 1
+          ? `${fileInput.files.length}件`
+          : fileInput.files[0].name;
+        submitBtn.disabled = false;
+        updateFilePreview();
+      } else {
+        fileName.textContent = '';
+        submitBtn.disabled = true;
+        document.getElementById('filePreview').innerHTML = '';
+        document.getElementById('filePreview').classList.remove('visible');
+      }
+    }
+
+    const objectUrlsToRevoke = [];
+
+    function buildProgressItems(container, files) {
+      container.innerHTML = '';
+      objectUrlsToRevoke.length = 0;
+      files.forEach((file, i) => {
+        const item = document.createElement('div');
+        item.className = 'progress-item';
+        item.dataset.index = i;
+        let thumb;
+        if (isVideoFile(file)) {
+          thumb = '<div class="progress-thumb video-placeholder">🎬</div>';
+        } else {
+          const url = URL.createObjectURL(file);
+          objectUrlsToRevoke.push(url);
+          thumb = `<img class="progress-thumb" src="${url}" alt="">`;
+        }
+        item.innerHTML = `
+          ${thumb}
+          <div class="progress-item-content">
+            <div class="progress-item-name">${file.name}</div>
+            <div class="progress-bar-wrap">
+              <div class="progress-bar-fill" style="width: 0%"></div>
+            </div>
+          </div>
+        `;
+        container.appendChild(item);
+      });
+      const countEl = document.createElement('p');
+      countEl.className = 'progress-text';
+      countEl.innerHTML = '<span id="progressCount">0</span> / <span id="progressTotal">' + files.length + '</span> 件';
+      container.insertBefore(countEl, container.firstChild);
+    }
+
+    function buildFormData(mode, file, activeOpts) {
+      const data = new FormData();
+      data.append('file', file);
+      data.append('mode', mode);
+      activeOpts.querySelectorAll('[name]').forEach(el => {
+        if (!el.name) return;
+        if (el.name === 'max_width' || el.name === 'max_height') {
+          if (document.querySelector('input[name="optimize_size_mode"]:checked')?.value === 'manual' && el.value) {
+            data.append(el.name, el.value);
+          }
+          return;
+        }
+        if (el.value) data.append(el.name, el.value);
+      });
+      return data;
+    }
+
+    // 送信
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      message.className = 'message';
+      message.textContent = '';
+      downloadBtn.style.display = 'none';
+      pendingDownload = null;
+      submitBtn.disabled = true;
+      processingOverlay.classList.add('visible');
+
+      const mode = modeInput.value;
+      const files = [...fileInput.files];
+      const total = files.length;
+      const progressContainer = document.getElementById('progressContainer');
+      buildProgressItems(progressContainer, files);
+      const countEl = progressContainer.querySelector('#progressCount');
+
+      const activeOpts = document.querySelector(`#options${mode.charAt(0).toUpperCase() + mode.slice(1)}`);
+      const results = [];
+      let totalInputSize = 0, totalOutputSize = 0;
+      isCancelled = false;
+
+      try {
+        for (let i = 0; i < files.length; i++) {
+          if (isCancelled) break;
+
+          countEl.textContent = i;
+          const item = progressContainer.querySelector(`.progress-item[data-index="${i}"]`);
+          const bar = item?.querySelector('.progress-bar-fill');
+          if (bar) bar.style.width = '5%';
+
+          const data = buildFormData(mode, files[i], activeOpts);
+          const controller = new AbortController();
+          currentAbortController = controller;
+          const timeoutId = setTimeout(() => controller.abort(), 600000);
+          const res = await fetch('/process', { method: 'POST', body: data, signal: controller.signal });
+          clearTimeout(timeoutId);
+          currentAbortController = null;
+
+          if (!res.ok) {
+            const err = await res.json();
+            throw new Error(err.error || 'エラーが発生しました');
+          }
+
+          const blob = await res.blob();
+          const filename = res.headers.get('Content-Disposition')?.split('filename=')[1]?.replace(/"/g, '').trim() || `output_${i}.png`;
+          results.push({ blob, filename });
+
+          const inSize = parseInt(res.headers.get('X-Input-Size'));
+          const outSize = parseInt(res.headers.get('X-Output-Size'));
+          if (!isNaN(inSize)) totalInputSize += inSize;
+          if (!isNaN(outSize)) totalOutputSize += outSize;
+
+          if (bar) bar.style.width = '100%';
+          countEl.textContent = i + 1;
+        }
+
+        let finalBlob, finalFilename;
+        if (isCancelled || results.length === 0) {
+          message.className = 'message';
+          message.style.color = 'var(--text-muted)';
+          message.textContent = 'キャンセルしました';
+        } else if (results.length === 1) {
+          finalBlob = results[0].blob;
+          finalFilename = results[0].filename;
+          pendingDownload = { blob: finalBlob, filename: finalFilename };
+          downloadBtn.style.display = 'flex';
+          submitBtn.disabled = true;
+          message.className = 'message success';
+          message.style.color = '';
+          let msg = '処理が完了しました。ダウンロードボタンをクリックしてください。';
+          if (total > 1) msg = `${total}件処理・${msg}`;
+          if (totalInputSize && totalOutputSize) {
+            const pct = Math.round((1 - totalOutputSize / totalInputSize) * 100);
+            const fmt = (b) => b >= 1024 * 1024 ? (b / 1024 / 1024).toFixed(1) + 'MB' : (b / 1024).toFixed(1) + 'KB';
+            msg += ` （約${pct}%削減 ${fmt(totalInputSize)} → ${fmt(totalOutputSize)}）`;
+          }
+          message.textContent = msg;
+        } else {
+          const zip = new JSZip();
+          results.forEach((r, i) => zip.file(r.filename, r.blob));
+          finalBlob = await zip.generateAsync({ type: 'blob' });
+          finalFilename = `images_${Date.now().toString(36)}.zip`;
+          pendingDownload = { blob: finalBlob, filename: finalFilename };
+          downloadBtn.style.display = 'flex';
+          submitBtn.disabled = true;
+          message.className = 'message success';
+          message.style.color = '';
+          let msg = `${total}件処理・処理が完了しました。ダウンロードボタンをクリックしてください。`;
+          if (totalInputSize && totalOutputSize) {
+            const pct = Math.round((1 - totalOutputSize / totalInputSize) * 100);
+            const fmt = (b) => b >= 1024 * 1024 ? (b / 1024 / 1024).toFixed(1) + 'MB' : (b / 1024).toFixed(1) + 'KB';
+            msg += ` （約${pct}%削減 ${fmt(totalInputSize)} → ${fmt(totalOutputSize)}）`;
+          }
+          message.textContent = msg;
+        }
+
+      } catch (err) {
+        message.className = 'message error';
+        message.style.color = '';
+        let msg = err.message || '通信エラー';
+        if (msg === 'Failed to fetch') {
+          msg = 'サーバーに接続できません。ターミナルで「python app.py」を実行し、http://localhost:5001 からアクセスしているか確認してください。';
+        } else if (err.name === 'AbortError') {
+          msg = isCancelled ? 'キャンセルしました' : 'タイムアウトしました。大きな画像のアップスケールは時間がかかります。';
+          if (isCancelled) message.className = 'message';
+        }
+        message.textContent = msg;
+      }
+
+      objectUrlsToRevoke.forEach(url => URL.revokeObjectURL(url));
+      processingOverlay.classList.remove('visible');
+      if (!pendingDownload) submitBtn.disabled = false;
+    });
+  </script>
+</body>
+</html>
