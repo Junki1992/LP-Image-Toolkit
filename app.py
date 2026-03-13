@@ -12,7 +12,7 @@ from pathlib import Path
 from flask import Flask, render_template, request, send_file, jsonify
 from werkzeug.utils import secure_filename
 
-from upscale import convert, optimize, optimize_video, remove_background, upscale
+from upscale import convert, crop, optimize, optimize_video, remove_background, upscale
 
 app = Flask(__name__)
 app.config["MAX_CONTENT_LENGTH"] = 500 * 1024 * 1024  # 500MB（動画対応）
@@ -54,6 +54,14 @@ def process_one(input_path, output_path, mode, form):
     elif mode == "removebg":
         remove_background(str(input_path), str(output_path))
         return None
+    elif mode == "crop":
+        x_pct = float(form.get("crop_x_pct", 0))
+        y_pct = float(form.get("crop_y_pct", 0))
+        w_pct = float(form.get("crop_w_pct", 100))
+        h_pct = float(form.get("crop_h_pct", 100))
+        quality = int(form.get("quality", 95))
+        crop(str(input_path), str(output_path), x_pct, y_pct, w_pct, h_pct, quality)
+        return None
     return None
 
 
@@ -71,10 +79,10 @@ def process():
         return jsonify({"error": "画像または動画ファイルが選択されていません"}), 400
 
     mode = request.form.get("mode", "convert")
-    if mode in ("convert", "upscale", "removebg"):
+    if mode in ("convert", "upscale", "removebg", "crop"):
         files = [f for f in files if not is_video(f.filename)]
         if not files:
-            return jsonify({"error": "形式変換・アップスケール・背景削除は画像のみ対応です。動画は軽量化モードでどうぞ。"}), 400
+            return jsonify({"error": "形式変換・アップスケール・背景削除・トリミングは画像のみ対応です。動画は軽量化モードでどうぞ。"}), 400
     ext = request.form.get("output_format", "png")
     if mode == "removebg":
         ext = "png"  # 背景削除は透過 PNG 固定

@@ -119,6 +119,7 @@
 
     .mode-tabs {
       display: flex;
+      flex-wrap: wrap;
       gap: 0.5rem;
       margin-bottom: 1rem;
     }
@@ -132,6 +133,7 @@
       color: var(--text-muted);
       font-family: inherit;
       font-size: 0.9rem;
+      white-space: nowrap;
       font-weight: 500;
       cursor: pointer;
       transition: all 0.2s;
@@ -261,6 +263,73 @@
       background: var(--error);
       color: white;
     }
+
+    .crop-preview-container {
+      margin-top: 1rem;
+    }
+
+    .crop-preview-label {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      margin-bottom: 0.5rem;
+    }
+
+    .crop-canvas-wrap {
+      max-width: 100%;
+      max-height: 360px;
+      overflow: auto;
+      background: var(--bg);
+      border-radius: 8px;
+      border: 1px solid var(--border);
+    }
+
+    .crop-canvas-inner {
+      position: relative;
+      display: inline-block;
+      min-width: 100px;
+      min-height: 100px;
+    }
+
+    .crop-canvas-inner img {
+      display: block;
+      max-width: 100%;
+      max-height: 340px;
+      vertical-align: bottom;
+    }
+
+    .crop-overlay {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+    }
+
+    .crop-shade {
+      position: absolute;
+      background: rgba(0, 0, 0, 0.5);
+    }
+
+    .crop-selection {
+      position: absolute;
+      border: 2px solid var(--accent);
+      box-shadow: 0 0 0 1px rgba(0,0,0,0.5);
+      cursor: move;
+      box-sizing: border-box;
+    }
+
+    .crop-handle {
+      position: absolute;
+      width: 12px;
+      height: 12px;
+      background: white;
+      border: 2px solid var(--accent);
+      border-radius: 2px;
+      cursor: nwse-resize;
+    }
+
+    .crop-handle[data-handle="nw"] { top: -6px; left: -6px; cursor: nwse-resize; }
+    .crop-handle[data-handle="ne"] { top: -6px; right: -6px; cursor: nesw-resize; }
+    .crop-handle[data-handle="sw"] { bottom: -6px; left: -6px; cursor: nesw-resize; }
+    .crop-handle[data-handle="se"] { bottom: -6px; right: -6px; cursor: nwse-resize; }
 
     .form-group select,
     .form-group input[type="number"] {
@@ -575,7 +644,7 @@
   <div class="container">
     <header>
       <h1>画像処理ツール</h1>
-      <p class="subtitle">アップスケール・形式変換・軽量化・背景削除（画像・動画）</p>
+      <p class="subtitle">アップスケール・形式変換・軽量化・背景削除・トリミング（画像・動画）</p>
     </header>
 
     <form id="form">
@@ -597,6 +666,7 @@
           <button type="button" class="mode-tab" data-mode="optimize">軽量化</button>
           <button type="button" class="mode-tab" data-mode="upscale">アップスケール</button>
           <button type="button" class="mode-tab" data-mode="removebg">背景削除</button>
+          <button type="button" class="mode-tab" data-mode="crop">トリミング</button>
         </div>
 
         <input type="hidden" name="mode" id="modeInput" value="convert">
@@ -709,11 +779,47 @@
           <div class="output-mp4-badge">出力: PNG（透過）</div>
           <p class="form-hint" style="margin-top: 0.5rem;">人物・商品などの背景を自動で削除します。初回実行時にモデルをダウンロードします（約176MB）。</p>
         </div>
+
+        <div id="optionsCrop" class="options">
+          <div class="form-group">
+            <label>出力形式</label>
+            <select name="output_format" data-mode="crop">
+              <option value="png">PNG</option>
+              <option value="jpg">JPEG</option>
+              <option value="webp">WebP</option>
+            </select>
+          </div>
+          <div id="cropPreviewContainer" class="crop-preview-container" style="display: none;">
+            <div class="crop-preview-label">切り抜き範囲を指定（ドラッグで選択・四隅でリサイズ）</div>
+            <div class="crop-canvas-wrap">
+              <div class="crop-canvas-inner" id="cropCanvasInner">
+                <img id="cropPreviewImg" src="" alt="">
+                <div class="crop-overlay" id="cropOverlay">
+                  <div class="crop-shade" id="cropShadeT"></div>
+                  <div class="crop-shade" id="cropShadeB"></div>
+                  <div class="crop-shade" id="cropShadeL"></div>
+                  <div class="crop-shade" id="cropShadeR"></div>
+                </div>
+                <div class="crop-selection" id="cropSelection">
+                  <div class="crop-handle" data-handle="nw"></div>
+                  <div class="crop-handle" data-handle="ne"></div>
+                  <div class="crop-handle" data-handle="sw"></div>
+                  <div class="crop-handle" data-handle="se"></div>
+                </div>
+              </div>
+            </div>
+            <input type="hidden" name="crop_x_pct" id="cropXPct" value="0">
+            <input type="hidden" name="crop_y_pct" id="cropYPct" value="0">
+            <input type="hidden" name="crop_w_pct" id="cropWPct" value="100">
+            <input type="hidden" name="crop_h_pct" id="cropHPct" value="100">
+            <input type="hidden" name="quality" value="95">
+          </div>
+        </div>
       </div>
 
       <div class="card">
         <button type="submit" class="btn btn-primary" id="submitBtn" disabled>
-          処理を実行
+          <span id="submitBtnText">処理を実行</span>
         </button>
         <button type="button" class="btn btn-download" id="downloadBtn" style="display: none; margin-top: 1rem;">
           ⬇ ダウンロード
@@ -812,6 +918,16 @@
 
         document.querySelectorAll('.options').forEach(o => o.classList.remove('active'));
         document.getElementById(`options${mode.charAt(0).toUpperCase() + mode.slice(1)}`).classList.add('active');
+
+        document.getElementById('submitBtnText').textContent = mode === 'crop' ? '切り取り' : '処理を実行';
+
+        if (mode === 'crop') initCropPreview();
+        else {
+          document.getElementById('cropPreviewContainer').style.display = 'none';
+          cropDrag = null;
+          document.onmousemove = null;
+          document.onmouseup = null;
+        }
       });
     });
 
@@ -904,6 +1020,7 @@
         submitBtn.disabled = false;
         fileName.textContent = imageFiles.length > 1 ? `${imageFiles.length}件` : imageFiles[0].name;
         updateFilePreview();
+        if (modeInput.value === 'crop') initCropPreview();
       }
     });
     fileInput.addEventListener('change', updateFileName);
@@ -959,12 +1076,139 @@
           : fileInput.files[0].name;
         submitBtn.disabled = false;
         updateFilePreview();
+        if (modeInput.value === 'crop') initCropPreview();
       } else {
         fileName.textContent = '';
         submitBtn.disabled = true;
         document.getElementById('filePreview').innerHTML = '';
         document.getElementById('filePreview').classList.remove('visible');
+        document.getElementById('cropPreviewContainer').style.display = 'none';
       }
+    }
+
+    // トリミング: 範囲選択UI
+    let cropState = { x: 0, y: 0, w: 0, h: 0, imgW: 0, imgH: 0, dispW: 0, dispH: 0 };
+    let cropDrag = null;
+    let cropPreviewUrl = null;
+
+    function initCropPreview() {
+      const container = document.getElementById('cropPreviewContainer');
+      const imgEl = document.getElementById('cropPreviewImg');
+      const files = [...fileInput.files].filter(f => !isVideoFile(f));
+      if (modeInput.value !== 'crop' || !files.length) {
+        container.style.display = 'none';
+        return;
+      }
+      if (cropPreviewUrl) URL.revokeObjectURL(cropPreviewUrl);
+      cropPreviewUrl = URL.createObjectURL(files[0]);
+      imgEl.src = cropPreviewUrl;
+      imgEl.onload = () => {
+        container.style.display = 'block';
+        const dispW = imgEl.clientWidth;
+        const dispH = imgEl.clientHeight;
+        const natW = imgEl.naturalWidth;
+        const natH = imgEl.naturalHeight;
+        cropState = { x: 0, y: 0, w: dispW, h: dispH, imgW: natW, imgH: natH, dispW, dispH };
+        updateCropUI();
+        setupCropEvents();
+      };
+    }
+
+    function updateCropUI() {
+      const { x, y, w, h, dispW, dispH, imgW, imgH } = cropState;
+      const sel = document.getElementById('cropSelection');
+      sel.style.left = x + 'px';
+      sel.style.top = y + 'px';
+      sel.style.width = w + 'px';
+      sel.style.height = h + 'px';
+
+      document.getElementById('cropShadeT').style.cssText = `top:0;left:0;right:0;height:${y}px`;
+      document.getElementById('cropShadeB').style.cssText = `top:${y+h}px;left:0;right:0;bottom:0`;
+      document.getElementById('cropShadeL').style.cssText = `top:${y}px;left:0;width:${x}px;height:${h}px`;
+      document.getElementById('cropShadeR').style.cssText = `top:${y}px;left:${x+w}px;right:0;height:${h}px`;
+
+      const xPct = (x / dispW) * 100;
+      const yPct = (y / dispH) * 100;
+      const wPct = (w / dispW) * 100;
+      const hPct = (h / dispH) * 100;
+      document.getElementById('cropXPct').value = xPct.toFixed(2);
+      document.getElementById('cropYPct').value = yPct.toFixed(2);
+      document.getElementById('cropWPct').value = wPct.toFixed(2);
+      document.getElementById('cropHPct').value = hPct.toFixed(2);
+    }
+
+    function setupCropEvents() {
+      const inner = document.getElementById('cropCanvasInner');
+      const sel = document.getElementById('cropSelection');
+      const imgEl = document.getElementById('cropPreviewImg');
+
+      const clamp = () => {
+        const { dispW, dispH } = cropState;
+        cropState.x = Math.max(0, Math.min(cropState.x, dispW - 10));
+        cropState.y = Math.max(0, Math.min(cropState.y, dispH - 10));
+        cropState.w = Math.max(10, Math.min(cropState.w, dispW - cropState.x));
+        cropState.h = Math.max(10, Math.min(cropState.h, dispH - cropState.y));
+      };
+
+      inner.onmousedown = (e) => {
+        if (e.target.closest('.crop-handle')) return;
+        const rect = inner.getBoundingClientRect();
+        const mx = e.clientX - rect.left;
+        const my = e.clientY - rect.top;
+        if (e.target.closest('.crop-selection')) {
+          cropDrag = { mode: 'move', startX: mx, startY: my, startCropX: cropState.x, startCropY: cropState.y };
+        } else {
+          cropDrag = { mode: 'new', startX: mx, startY: my };
+        }
+      };
+
+      document.onmousemove = (e) => {
+        if (!cropDrag) return;
+        const rect = inner.getBoundingClientRect();
+        const mx = e.clientX - rect.left;
+        const my = e.clientY - rect.top;
+        if (cropDrag.mode === 'new') {
+          cropState.x = Math.min(cropDrag.startX, mx);
+          cropState.y = Math.min(cropDrag.startY, my);
+          cropState.w = Math.abs(mx - cropDrag.startX);
+          cropState.h = Math.abs(my - cropDrag.startY);
+          clamp();
+        } else if (cropDrag.mode === 'move') {
+          cropState.x = cropDrag.startCropX + (mx - cropDrag.startX);
+          cropState.y = cropDrag.startCropY + (my - cropDrag.startY);
+          clamp();
+        } else if (cropDrag.mode === 'resize') {
+          const h = cropDrag.handle;
+          const { x: ox, y: oy, w: ow, h: oh } = cropDrag.startState || cropState;
+          if (h === 'se') {
+            cropState.w = Math.max(10, mx - cropState.x);
+            cropState.h = Math.max(10, my - cropState.y);
+          } else if (h === 'sw') {
+            cropState.x = Math.min(mx, ox + ow - 10);
+            cropState.w = ox + ow - cropState.x;
+            cropState.h = Math.max(10, my - cropState.y);
+          } else if (h === 'ne') {
+            cropState.y = Math.min(my, oy + oh - 10);
+            cropState.w = Math.max(10, mx - cropState.x);
+            cropState.h = oy + oh - cropState.y;
+          } else if (h === 'nw') {
+            cropState.x = Math.min(mx, ox + ow - 10);
+            cropState.y = Math.min(my, oy + oh - 10);
+            cropState.w = ox + ow - cropState.x;
+            cropState.h = oy + oh - cropState.y;
+          }
+          clamp();
+        }
+        updateCropUI();
+      };
+      document.onmouseup = () => { cropDrag = null; };
+
+      sel.querySelectorAll('.crop-handle').forEach(handle => {
+        handle.onmousedown = (e) => {
+          e.stopPropagation();
+          cropDrag = { mode: 'resize', handle: handle.dataset.handle, startState: { ...cropState } };
+        };
+      });
     }
 
     const objectUrlsToRevoke = [];

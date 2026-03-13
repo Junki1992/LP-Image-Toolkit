@@ -31,6 +31,7 @@ python app.py
 - **軽量化**: 画像・動画の圧縮（長辺1920px以下、動画は H.264）
 - **アップスケール**: Real-ESRGAN で 2倍/4倍（写真・アニメモード）
 - **背景削除**: rembg で人物・商品などの背景を自動削除（透過 PNG）
+- **トリミング**: ドラッグで範囲選択・四隅でリサイズ（PhotoScape風）
 - **プレビュー**: 1枚処理時は完了後に結果をプレビュー表示（透過はチェッカーボード背景で表示）
 
 ## コマンドライン
@@ -48,4 +49,7 @@ python upscale.py optimize input.mp4 output.mp4 [--crf 18]
 
 # 背景削除
 python upscale.py removebg input.jpg output.png
+
+# トリミング（割合指定 %）
+python upscale.py crop input.jpg output.png [--x 0] [--y 0] [--w 100] [--h 100]
 ```

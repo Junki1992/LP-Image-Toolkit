@@ -133,6 +133,45 @@ def optimize_video(input_path, output_path, max_width=None, max_height=None, crf
     }
 
 
+def crop(input_path, output_path, x_pct, y_pct, w_pct, h_pct, quality=95):
+    """画像を切り抜く（割合指定 0-100）
+    x_pct, y_pct: 左上の位置（%）
+    w_pct, h_pct: 幅・高さ（%）
+    """
+    print("[1/3] 画像を読み込み中...")
+    img = cv2.imread(input_path, cv2.IMREAD_UNCHANGED)
+    if img is None:
+        raise ValueError(f"画像を読み込めませんでした: {input_path}")
+
+    h, w = img.shape[:2]
+    print(f"      入力: {w}x{h}px")
+
+    x = int(w * x_pct / 100)
+    y = int(h * y_pct / 100)
+    cw = int(w * w_pct / 100)
+    ch = int(h * h_pct / 100)
+    x = max(0, min(x, w - 1))
+    y = max(0, min(y, h - 1))
+    cw = max(1, min(cw, w - x))
+    ch = max(1, min(ch, h - y))
+
+    print("[2/3] 切り抜き中...")
+    cropped = img[y:y + ch, x:x + cw]
+    print(f"      {w}x{h} → {cw}x{ch}px")
+
+    print("[3/3] 保存中...")
+    ext = Path(output_path).suffix.lower()
+    if ext in (".jpg", ".jpeg"):
+        cv2.imwrite(output_path, cropped, [cv2.IMWRITE_JPEG_QUALITY, quality])
+    elif ext == ".png":
+        cv2.imwrite(output_path, cropped, [cv2.IMWRITE_PNG_COMPRESSION, 6])
+    elif ext in (".webp",):
+        cv2.imwrite(output_path, cropped, [cv2.IMWRITE_WEBP_QUALITY, quality])
+    else:
+        cv2.imwrite(output_path, cropped)
+    print(f"      保存しました: {output_path}")
+
+
 def remove_background(input_path, output_path):
     """画像の背景を削除する（rembg 使用）
     出力は透過 PNG のみ
@@ -240,6 +279,18 @@ if __name__ == "__main__":
         parser.add_argument("output", help="出力画像パス（PNG）")
         args = parser.parse_args(sys.argv[2:])
         remove_background(args.input, args.output)
+    elif len(sys.argv) >= 2 and sys.argv[1] == "crop":
+        # crop: トリミング（割合指定）
+        parser = argparse.ArgumentParser(description="画像を切り抜き")
+        parser.add_argument("input", help="入力画像パス")
+        parser.add_argument("output", help="出力画像パス")
+        parser.add_argument("--x", type=float, default=0, help="左上 X (%)")
+        parser.add_argument("--y", type=float, default=0, help="左上 Y (%)")
+        parser.add_argument("--w", type=float, default=100, help="幅 (%)")
+        parser.add_argument("--h", type=float, default=100, help="高さ (%)")
+        parser.add_argument("--quality", "-q", type=int, default=95)
+        args = parser.parse_args(sys.argv[2:])
+        crop(args.input, args.output, args.x, args.y, args.w, args.h, args.quality)
     elif len(sys.argv) >= 2 and sys.argv[1] == "convert":
         # convert: 形式変換
         parser = argparse.ArgumentParser(description="画像の形式を変換（jpg→png など）")
