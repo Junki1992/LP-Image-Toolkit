@@ -568,6 +568,21 @@
       transform: translateY(-1px);
     }
 
+    .save-area {
+      margin-top: 1rem;
+    }
+
+    .save-filename-input {
+      width: 100%;
+      padding: 0.65rem 0.9rem;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      background: var(--bg);
+      color: var(--text);
+      font-family: inherit;
+      font-size: 0.9rem;
+    }
+
     .message {
       margin-top: 1rem;
       padding: 0.75rem 1rem;
@@ -821,9 +836,16 @@
         <button type="submit" class="btn btn-primary" id="submitBtn" disabled>
           <span id="submitBtnText">処理を実行</span>
         </button>
-        <button type="button" class="btn btn-download" id="downloadBtn" style="display: none; margin-top: 1rem;">
-          ⬇ ダウンロード
-        </button>
+        <div id="saveArea" class="save-area" style="display: none;">
+          <div class="form-group" style="margin-bottom: 0.5rem;">
+            <label>保存名・保存先</label>
+            <input type="text" id="saveFilename" class="save-filename-input" placeholder="ファイル名">
+            <p class="form-hint" style="margin-top: 0.35rem;">ファイル名を編集できます。Chrome/Edge では「保存」で保存先も選択可能です。</p>
+          </div>
+          <button type="button" class="btn btn-download" id="downloadBtn">
+            保存
+          </button>
+        </div>
         <div id="resultPreview" class="result-preview">
           <div class="result-preview-label">プレビュー</div>
           <div class="result-preview-wrap">
@@ -854,6 +876,8 @@
     const form = document.getElementById('form');
     const submitBtn = document.getElementById('submitBtn');
     const downloadBtn = document.getElementById('downloadBtn');
+    const saveArea = document.getElementById('saveArea');
+    const saveFilenameInput = document.getElementById('saveFilename');
     const message = document.getElementById('message');
     const modeInput = document.getElementById('modeInput');
     const processingOverlay = document.getElementById('processingOverlay');
@@ -874,20 +898,45 @@
       return /\.(mp4|mov|avi|mkv|webm)$/i.test(file.name) || (file.type && file.type.startsWith('video/'));
     }
 
-    downloadBtn.addEventListener('click', () => {
-      if (pendingDownload) {
-        const { blob, filename } = pendingDownload;
+    downloadBtn.addEventListener('click', async () => {
+      if (!pendingDownload) return;
+      const { blob, filename } = pendingDownload;
+      const nameToUse = saveFilenameInput.value.trim() || filename;
+
+      if ('showSaveFilePicker' in window) {
+        try {
+          const ext = (nameToUse.includes('.') ? '.' + nameToUse.split('.').pop() : '.png').toLowerCase();
+          const types = ext === '.zip'
+            ? [{ description: 'ZIP', accept: { 'application/zip': ['.zip'] } }]
+            : ext === '.mp4'
+            ? [{ description: '動画', accept: { 'video/mp4': ['.mp4'] } }]
+            : [{ description: '画像', accept: { 'image/*': ['.png', '.jpg', '.jpeg', '.webp'] } }];
+          const handle = await window.showSaveFilePicker({ suggestedName: nameToUse, types });
+          const writable = await handle.createWritable();
+          await writable.write(blob);
+          await writable.close();
+        } catch (err) {
+          if (err.name === 'AbortError') return;
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = nameToUse;
+          a.click();
+          URL.revokeObjectURL(url);
+        }
+      } else {
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
-        a.download = filename;
+        a.download = nameToUse;
         a.click();
         URL.revokeObjectURL(url);
-        pendingDownload = null;
-        downloadBtn.style.display = 'none';
-        submitBtn.disabled = !fileInput.files.length;
-        hideResultPreview();
       }
+
+      pendingDownload = null;
+      saveArea.style.display = 'none';
+      submitBtn.disabled = !fileInput.files.length;
+      hideResultPreview();
     });
 
     function hideResultPreview() {
@@ -1267,7 +1316,7 @@
       e.preventDefault();
       message.className = 'message';
       message.textContent = '';
-      downloadBtn.style.display = 'none';
+      saveArea.style.display = 'none';
       pendingDownload = null;
       hideResultPreview();
       submitBtn.disabled = true;
@@ -1329,7 +1378,8 @@
           finalBlob = results[0].blob;
           finalFilename = results[0].filename;
           pendingDownload = { blob: finalBlob, filename: finalFilename };
-          downloadBtn.style.display = 'flex';
+          saveFilenameInput.value = finalFilename;
+          saveArea.style.display = 'block';
           submitBtn.disabled = true;
           showResultPreview(finalBlob);
           message.className = 'message success';
@@ -1348,7 +1398,8 @@
           finalBlob = await zip.generateAsync({ type: 'blob' });
           finalFilename = `images_${Date.now().toString(36)}.zip`;
           pendingDownload = { blob: finalBlob, filename: finalFilename };
-          downloadBtn.style.display = 'flex';
+          saveFilenameInput.value = finalFilename;
+          saveArea.style.display = 'block';
           submitBtn.disabled = true;
           message.className = 'message success';
           message.style.color = '';
