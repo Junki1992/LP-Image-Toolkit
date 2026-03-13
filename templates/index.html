@@ -699,6 +699,27 @@
       color: var(--accent);
     }
 
+    .btn-reset {
+      padding: 0.6rem 1.2rem;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      background: transparent;
+      color: var(--text-muted);
+      font-size: 0.9rem;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .btn-reset:hover:not(:disabled) {
+      border-color: var(--text-muted);
+      color: var(--text);
+    }
+
+    .btn-reset:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
     .save-filename-input {
       width: 100%;
       padding: 0.65rem 0.9rem;
@@ -1002,9 +1023,12 @@
       </div>
 
       <div class="card">
-        <button type="submit" class="btn btn-primary" id="submitBtn" disabled>
-          <span id="submitBtnText">処理を実行</span>
-        </button>
+        <div style="display: flex; gap: 0.75rem; flex-wrap: wrap; align-items: center;">
+          <button type="submit" class="btn btn-primary" id="submitBtn" disabled>
+            <span id="submitBtnText">処理を実行</span>
+          </button>
+          <button type="button" class="btn btn-reset" id="resetBtn" disabled>リセット</button>
+        </div>
         <div id="saveArea" class="save-area" style="display: none;">
           <div class="form-group" style="margin-bottom: 0.5rem;">
             <label>保存名・保存先</label>
@@ -1113,7 +1137,49 @@
       saveArea.style.display = 'none';
       submitBtn.disabled = !fileInput.files.length;
       hideResultPreview();
+      updateResetBtn();
     });
+
+    document.getElementById('resetBtn').addEventListener('click', () => {
+      fileInput.value = '';
+      pendingDownload = null;
+      saveArea.style.display = 'none';
+      message.className = 'message';
+      message.style.display = 'none';
+      message.textContent = '';
+      hideResultPreview();
+      submitBtn.disabled = true;
+      updateFileName();
+
+      const mode = modeInput.value;
+      if (mode === 'pipeline') {
+        pipelineSteps = [{ mode: 'convert' }];
+        renderPipelineSteps();
+        updatePipelineStepsInput();
+        document.getElementById('pipelineCropXPct').value = '0';
+        document.getElementById('pipelineCropYPct').value = '0';
+        document.getElementById('pipelineCropWPct').value = '100';
+        document.getElementById('pipelineCropHPct').value = '100';
+        updatePipelineCropVisibility();
+        initPipelineCropPreview();
+      } else if (mode === 'crop') {
+        document.getElementById('cropXPct').value = '0';
+        document.getElementById('cropYPct').value = '0';
+        document.getElementById('cropWPct').value = '100';
+        document.getElementById('cropHPct').value = '100';
+        initCropPreview();
+      } else if (mode === 'optimize') {
+        document.getElementById('optimizeVideoCheck').checked = false;
+        document.getElementById('optimizeImageFormat').style.display = 'block';
+        document.getElementById('optimizeVideoFormat').style.display = 'none';
+      }
+      updateResetBtn();
+    });
+
+    function updateResetBtn() {
+      const resetBtn = document.getElementById('resetBtn');
+      resetBtn.disabled = !fileInput.files.length && !pendingDownload;
+    }
 
     function hideResultPreview() {
       const el = document.getElementById('resultPreview');
@@ -1529,6 +1595,7 @@
         document.getElementById('cropPreviewContainer').style.display = 'none';
         document.getElementById('pipelineCropPreview').style.display = 'none';
       }
+      updateResetBtn();
     }
 
     // トリミング: 範囲選択UI
@@ -1861,6 +1928,7 @@
           saveArea.style.display = 'block';
           submitBtn.disabled = true;
           showResultPreview(blob);
+          updateResetBtn();
           message.className = 'message success';
           message.textContent = `${total}件処理・処理が完了しました。保存ボタンをクリックしてください。`;
         } catch (err) {
@@ -1932,6 +2000,7 @@
           saveArea.style.display = 'block';
           submitBtn.disabled = true;
           showResultPreview(finalBlob);
+          updateResetBtn();
           message.className = 'message success';
           message.style.color = '';
           let msg = '処理が完了しました。ダウンロードボタンをクリックしてください。';
@@ -1951,6 +2020,7 @@
           saveFilenameInput.value = finalFilename;
           saveArea.style.display = 'block';
           submitBtn.disabled = true;
+          updateResetBtn();
           message.className = 'message success';
           message.style.color = '';
           let msg = `${total}件処理・処理が完了しました。ダウンロードボタンをクリックしてください。`;
