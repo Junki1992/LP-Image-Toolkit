@@ -133,6 +133,26 @@ def optimize_video(input_path, output_path, max_width=None, max_height=None, crf
     }
 
 
+def remove_background(input_path, output_path):
+    """画像の背景を削除する（rembg 使用）
+    出力は透過 PNG のみ
+    """
+    from PIL import Image
+    from rembg import remove as rembg_remove
+
+    print("[1/3] 画像を読み込み中...")
+    input_img = Image.open(input_path).convert("RGB")
+    w, h = input_img.size
+    print(f"      入力: {w}x{h}px")
+
+    print("[2/3] 背景削除中...")
+    output_img = rembg_remove(input_img)
+
+    print("[3/3] 保存中...")
+    output_img.save(output_path, "PNG")
+    print(f"      保存しました: {output_path}")
+
+
 def convert(input_path, output_path, quality=95):
     """画像の形式を変換する（例: jpg→png, png→jpg）"""
     print("[1/2] 画像を読み込み中...")
@@ -213,6 +233,13 @@ if __name__ == "__main__":
         else:
             auto = not args.no_auto and not (args.max_width or args.max_height)
             optimize(args.input, args.output, args.max_width, args.max_height, args.quality, auto=auto)
+    elif len(sys.argv) >= 2 and sys.argv[1] == "removebg":
+        # removebg: 背景削除
+        parser = argparse.ArgumentParser(description="画像の背景を削除")
+        parser.add_argument("input", help="入力画像パス")
+        parser.add_argument("output", help="出力画像パス（PNG）")
+        args = parser.parse_args(sys.argv[2:])
+        remove_background(args.input, args.output)
     elif len(sys.argv) >= 2 and sys.argv[1] == "convert":
         # convert: 形式変換
         parser = argparse.ArgumentParser(description="画像の形式を変換（jpg→png など）")

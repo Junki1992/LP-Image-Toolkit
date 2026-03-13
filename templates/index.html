@@ -495,6 +495,50 @@
       display: block;
     }
 
+    .result-preview {
+      display: none;
+      margin-top: 1rem;
+      padding: 1rem;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+    }
+
+    .result-preview.visible {
+      display: block;
+    }
+
+    .result-preview-label {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      margin-bottom: 0.5rem;
+    }
+
+    .result-preview-wrap {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 120px;
+      padding: 1rem;
+      background-color: #1a1a1f;
+      background-image:
+        linear-gradient(45deg, #2a2a32 25%, transparent 25%),
+        linear-gradient(-45deg, #2a2a32 25%, transparent 25%),
+        linear-gradient(45deg, transparent 75%, #2a2a32 75%),
+        linear-gradient(-45deg, transparent 75%, #2a2a32 75%);
+      background-size: 16px 16px;
+      background-position: 0 0, 0 8px, 8px -8px, -8px 0px;
+      border-radius: 8px;
+      overflow: auto;
+      max-height: 400px;
+    }
+
+    .result-preview-wrap img {
+      max-width: 100%;
+      max-height: 360px;
+      object-fit: contain;
+    }
+
     footer {
       text-align: center;
       margin-top: 2rem;
@@ -507,7 +551,7 @@
   <div class="container">
     <header>
       <h1>画像処理ツール</h1>
-      <p class="subtitle">アップスケール・形式変換・軽量化（画像・動画）</p>
+      <p class="subtitle">アップスケール・形式変換・軽量化・背景削除（画像・動画）</p>
     </header>
 
     <form id="form">
@@ -528,6 +572,7 @@
           <button type="button" class="mode-tab" data-mode="convert">形式変換</button>
           <button type="button" class="mode-tab" data-mode="optimize">軽量化</button>
           <button type="button" class="mode-tab" data-mode="upscale">アップスケール</button>
+          <button type="button" class="mode-tab" data-mode="removebg">背景削除</button>
         </div>
 
         <input type="hidden" name="mode" id="modeInput" value="convert">
@@ -635,6 +680,11 @@
             </div>
           </div>
         </div>
+
+        <div id="optionsRemovebg" class="options">
+          <div class="output-mp4-badge">出力: PNG（透過）</div>
+          <p class="form-hint" style="margin-top: 0.5rem;">人物・商品などの背景を自動で削除します。初回実行時にモデルをダウンロードします（約176MB）。</p>
+        </div>
       </div>
 
       <div class="card">
@@ -644,6 +694,12 @@
         <button type="button" class="btn btn-download" id="downloadBtn" style="display: none; margin-top: 1rem;">
           ⬇ ダウンロード
         </button>
+        <div id="resultPreview" class="result-preview">
+          <div class="result-preview-label">プレビュー</div>
+          <div class="result-preview-wrap">
+            <img id="resultPreviewImg" src="" alt="結果プレビュー">
+          </div>
+        </div>
         <div class="message" id="message"></div>
       </div>
     </form>
@@ -675,6 +731,7 @@
     let pendingDownload = null;
     let currentAbortController = null;
     let isCancelled = false;
+    let resultPreviewUrl = null;
 
     document.getElementById('cancelBtn').addEventListener('click', () => {
       if (currentAbortController) {
@@ -699,8 +756,27 @@
         pendingDownload = null;
         downloadBtn.style.display = 'none';
         submitBtn.disabled = !fileInput.files.length;
+        hideResultPreview();
       }
     });
+
+    function hideResultPreview() {
+      const el = document.getElementById('resultPreview');
+      el.classList.remove('visible');
+      if (resultPreviewUrl) {
+        URL.revokeObjectURL(resultPreviewUrl);
+        resultPreviewUrl = null;
+      }
+    }
+
+    function showResultPreview(blob) {
+      hideResultPreview();
+      if (!blob) return;
+      resultPreviewUrl = URL.createObjectURL(blob);
+      const img = document.getElementById('resultPreviewImg');
+      img.src = resultPreviewUrl;
+      document.getElementById('resultPreview').classList.add('visible');
+    }
 
     // モード切り替え
     document.querySelectorAll('.mode-tab').forEach(tab => {
@@ -907,6 +983,7 @@
       message.textContent = '';
       downloadBtn.style.display = 'none';
       pendingDownload = null;
+      hideResultPreview();
       submitBtn.disabled = true;
       processingOverlay.classList.add('visible');
 
@@ -968,6 +1045,7 @@
           pendingDownload = { blob: finalBlob, filename: finalFilename };
           downloadBtn.style.display = 'flex';
           submitBtn.disabled = true;
+          showResultPreview(finalBlob);
           message.className = 'message success';
           message.style.color = '';
           let msg = '処理が完了しました。ダウンロードボタンをクリックしてください。';
@@ -998,6 +1076,7 @@
         }
 
       } catch (err) {
+        hideResultPreview();
         message.className = 'message error';
         message.style.color = '';
         let msg = err.message || '通信エラー';

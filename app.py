@@ -12,7 +12,7 @@ from pathlib import Path
 from flask import Flask, render_template, request, send_file, jsonify
 from werkzeug.utils import secure_filename
 
-from upscale import convert, optimize, optimize_video, upscale
+from upscale import convert, optimize, optimize_video, remove_background, upscale
 
 app = Flask(__name__)
 app.config["MAX_CONTENT_LENGTH"] = 500 * 1024 * 1024  # 500MB（動画対応）
@@ -51,6 +51,9 @@ def process_one(input_path, output_path, mode, form):
             return optimize_video(str(input_path), str(output_path), max_width, max_height, crf=18)
         quality = int(form.get("quality", 85))
         return optimize(str(input_path), str(output_path), max_width, max_height, quality, auto=True)
+    elif mode == "removebg":
+        remove_background(str(input_path), str(output_path))
+        return None
     return None
 
 
@@ -68,11 +71,13 @@ def process():
         return jsonify({"error": "画像または動画ファイルが選択されていません"}), 400
 
     mode = request.form.get("mode", "convert")
-    if mode in ("convert", "upscale"):
+    if mode in ("convert", "upscale", "removebg"):
         files = [f for f in files if not is_video(f.filename)]
         if not files:
-            return jsonify({"error": "形式変換・アップスケールは画像のみ対応です。動画は軽量化モードでどうぞ。"}), 400
+            return jsonify({"error": "形式変換・アップスケール・背景削除は画像のみ対応です。動画は軽量化モードでどうぞ。"}), 400
     ext = request.form.get("output_format", "png")
+    if mode == "removebg":
+        ext = "png"  # 背景削除は透過 PNG 固定
 
     with tempfile.TemporaryDirectory() as tmpdir:
         tmpdir = Path(tmpdir)
