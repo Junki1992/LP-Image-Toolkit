@@ -534,6 +534,55 @@
       margin-top: 1rem;
     }
 
+    .pipeline-progress-steps {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+      margin-top: 1rem;
+      justify-content: center;
+    }
+
+    .pipeline-progress-step {
+      display: flex;
+      align-items: center;
+      gap: 0.35rem;
+      padding: 0.35rem 0.6rem;
+      border-radius: 6px;
+      font-size: 0.8rem;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      color: var(--text-muted);
+    }
+
+    .pipeline-progress-step.done {
+      border-color: var(--accent);
+      color: var(--accent);
+      background: rgba(99, 102, 241, 0.1);
+    }
+
+    .pipeline-progress-step.processing {
+      border-color: var(--accent);
+      color: var(--accent);
+      background: rgba(99, 102, 241, 0.15);
+      animation: pulse-step 1.2s ease-in-out infinite;
+    }
+
+    @keyframes pulse-step {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.7; }
+    }
+
+    .pipeline-progress-step .step-icon {
+      font-size: 0.9rem;
+    }
+
+    .pipeline-progress-current {
+      text-align: center;
+      font-size: 0.9rem;
+      color: var(--text);
+      margin-top: 0.75rem;
+    }
+
     .processing-text {
       color: var(--text-muted);
       font-size: 1rem;
@@ -980,6 +1029,8 @@
       <div class="progress-container" id="progressContainer">
         <p class="progress-text"><span id="progressCount">0</span> / <span id="progressTotal">0</span> 件</p>
       </div>
+      <div id="pipelineProgressSteps" class="pipeline-progress-steps" style="display: none;"></div>
+      <p id="pipelineProgressCurrent" class="pipeline-progress-current" style="display: none;"></p>
       <p class="processing-text">処理中...</p>
       <button type="button" class="btn-cancel" id="cancelBtn">キャンセル</button>
     </div>
@@ -1004,11 +1055,16 @@
 
     let pendingDownload = null;
     let currentAbortController = null;
+    let currentPipelineEvtSource = null;
     let isCancelled = false;
     let resultPreviewUrl = null;
 
     document.getElementById('cancelBtn').addEventListener('click', () => {
-      if (currentAbortController) {
+      if (currentPipelineEvtSource) {
+        isCancelled = true;
+        currentPipelineEvtSource.close();
+        currentPipelineEvtSource = null;
+      } else if (currentAbortController) {
         isCancelled = true;
         currentAbortController.abort();
       }
@@ -1102,6 +1158,7 @@
           document.onmousemove = null;
           document.onmouseup = null;
         }
+        if (mode === 'optimize') maybeAutoCheckOptimizeVideo();
       });
     });
 
@@ -1389,6 +1446,7 @@
         submitBtn.disabled = false;
         fileName.textContent = imageFiles.length > 1 ? `${imageFiles.length}件` : imageFiles[0].name;
         updateFilePreview();
+        maybeAutoCheckOptimizeVideo();
         if (modeInput.value === 'crop') initCropPreview();
         if (modeInput.value === 'pipeline') initPipelineCropPreview();
       }
@@ -1439,6 +1497,17 @@
       });
     }
 
+    function maybeAutoCheckOptimizeVideo() {
+      if (modeInput.value !== 'optimize' || !fileInput.files.length) return;
+      const hasVideo = [...fileInput.files].some(isVideoFile);
+      if (hasVideo) {
+        const cb = document.getElementById('optimizeVideoCheck');
+        cb.checked = true;
+        document.getElementById('optimizeImageFormat').style.display = 'none';
+        document.getElementById('optimizeVideoFormat').style.display = 'block';
+      }
+    }
+
     function updateFileName() {
       if (fileInput.files.length) {
         fileName.textContent = fileInput.files.length > 1
@@ -1446,6 +1515,7 @@
           : fileInput.files[0].name;
         submitBtn.disabled = false;
         updateFilePreview();
+        maybeAutoCheckOptimizeVideo();
         if (modeInput.value === 'crop') initCropPreview();
         if (modeInput.value === 'pipeline') {
           updatePipelineCropVisibility();
@@ -1588,9 +1658,11 @@
 
     const objectUrlsToRevoke = [];
 
-    function buildProgressItems(container, files) {
+    function buildProgressItems(container, files, isPipeline = false) {
       container.innerHTML = '';
       objectUrlsToRevoke.length = 0;
+      document.getElementById('pipelineProgressSteps').style.display = 'none';
+      document.getElementById('pipelineProgressCurrent').style.display = 'none';
       files.forEach((file, i) => {
         const item = document.createElement('div');
         item.className = 'progress-item';
@@ -1606,7 +1678,7 @@
         item.innerHTML = `
           ${thumb}
           <div class="progress-item-content">
-            <div class="progress-item-name">${file.name}</div>
+            <div class="progress-item-name">${escapeHtml(file.name)}</div>
             <div class="progress-bar-wrap">
               <div class="progress-bar-fill" style="width: 0%"></div>
             </div>
@@ -1618,6 +1690,39 @@
       countEl.className = 'progress-text';
       countEl.innerHTML = '<span id="progressCount">0</span> / <span id="progressTotal">' + files.length + '</span> 件';
       container.insertBefore(countEl, container.firstChild);
+    }
+
+    function buildPipelineProgressSteps(stepNames) {
+      const wrap = document.getElementById('pipelineProgressSteps');
+      wrap.innerHTML = stepNames.map((name, i) => `
+        <div class="pipeline-progress-step" data-step-index="${i}" title="${escapeHtml(name)}">
+          <span class="step-icon">○</span>
+          <span>${escapeHtml(name)}</span>
+        </div>
+      `).join('');
+      wrap.style.display = 'flex';
+    }
+
+    function updatePipelineStepStatus(stepIndex, status) {
+      const step = document.querySelector(`.pipeline-progress-step[data-step-index="${stepIndex}"]`);
+      if (!step) return;
+      step.classList.remove('done', 'processing');
+      const icon = step.querySelector('.step-icon');
+      if (status === 'done') {
+        step.classList.add('done');
+        icon.textContent = '✓';
+      } else if (status === 'processing') {
+        step.classList.add('processing');
+        icon.textContent = '◐';
+      } else {
+        icon.textContent = '○';
+      }
+    }
+
+    function updatePipelineProgressCurrent(fileIndex, fileTotal, stepName) {
+      const el = document.getElementById('pipelineProgressCurrent');
+      el.textContent = `ファイル ${fileIndex + 1}/${fileTotal} → ${stepName} を処理中`;
+      el.style.display = 'block';
     }
 
     function buildFormData(mode, file, activeOpts) {
@@ -1674,6 +1779,9 @@
           return;
         }
         updatePipelineStepsInput();
+        const stepNames = pipelineSteps.map(s => PIPELINE_MODES.find(m => m.value === s.mode)?.label || s.mode);
+        buildPipelineProgressSteps(stepNames);
+
         const data = new FormData();
         files.forEach(f => data.append('file', f));
         data.append('mode', 'pipeline');
@@ -1691,8 +1799,63 @@
             const err = await res.json();
             throw new Error(err.error || 'エラーが発生しました');
           }
-          const blob = await res.blob();
-          const filename = res.headers.get('Content-Disposition')?.split('filename=')[1]?.replace(/"/g, '').trim() || `output.${files.length > 1 ? 'zip' : 'png'}`;
+          const json = await res.json();
+          const jobId = json.job_id;
+          if (!jobId) throw new Error('ジョブIDが返されませんでした');
+
+          await new Promise((resolve, reject) => {
+            currentPipelineEvtSource = new EventSource(`/jobs/${jobId}/stream`);
+            currentPipelineEvtSource.onmessage = (e) => {
+              if (isCancelled) {
+                currentPipelineEvtSource?.close();
+                currentPipelineEvtSource = null;
+                reject(new Error('AbortError'));
+                return;
+              }
+              const ev = JSON.parse(e.data);
+              if (ev.type === 'ping') return;
+              if (ev.done) {
+                currentPipelineEvtSource?.close();
+                currentPipelineEvtSource = null;
+                const countEl = progressContainer.querySelector('#progressCount');
+                if (countEl) countEl.textContent = total;
+                progressContainer.querySelectorAll('.progress-bar-fill').forEach(b => { b.style.width = '100%'; });
+                if (ev.error) return reject(new Error(ev.error));
+                return resolve();
+              }
+              if (ev.status === 'processing') {
+                if (ev.step_index === 0 && ev.file_index > 0) {
+                  stepNames.forEach((_, idx) => updatePipelineStepStatus(idx, 'pending'));
+                }
+                updatePipelineStepStatus(ev.step_index, 'processing');
+                updatePipelineProgressCurrent(ev.file_index, ev.file_total, ev.step_name);
+                const countEl = progressContainer.querySelector('#progressCount');
+                if (countEl) countEl.textContent = ev.file_index;
+              } else if (ev.status === 'done') {
+                updatePipelineStepStatus(ev.step_index, 'done');
+                const stepTotal = stepNames.length;
+                const item = progressContainer.querySelector(`.progress-item[data-index="${ev.file_index}"]`);
+                const bar = item?.querySelector('.progress-bar-fill');
+                if (bar) {
+                  const pct = ev.step_index >= stepTotal - 1 ? 100 : Math.round((ev.step_index + 1) / stepTotal * 100);
+                  bar.style.width = pct + '%';
+                }
+              }
+            };
+            currentPipelineEvtSource.onerror = () => {
+              currentPipelineEvtSource?.close();
+              currentPipelineEvtSource = null;
+              reject(new Error('進捗ストリームの接続に失敗しました'));
+            };
+          });
+
+          const resResult = await fetch(`/jobs/${jobId}/result`);
+          if (!resResult.ok) {
+            const err = await resResult.json();
+            throw new Error(err.error || '結果の取得に失敗しました');
+          }
+          const blob = await resResult.blob();
+          const filename = resResult.headers.get('Content-Disposition')?.split('filename=')[1]?.replace(/"/g, '').trim() || `output.${files.length > 1 ? 'zip' : 'png'}`;
           pendingDownload = { blob, filename };
           saveFilenameInput.value = filename;
           saveArea.style.display = 'block';
@@ -1710,6 +1873,8 @@
           message.textContent = msg;
         }
         processingOverlay.classList.remove('visible');
+        document.getElementById('pipelineProgressSteps').style.display = 'none';
+        document.getElementById('pipelineProgressCurrent').style.display = 'none';
         if (!pendingDownload) submitBtn.disabled = false;
         return;
       }
