@@ -172,20 +172,43 @@ def crop(input_path, output_path, x_pct, y_pct, w_pct, h_pct, quality=95):
     print(f"      保存しました: {output_path}")
 
 
+_rembg_session = None
+
+
+def _get_rembg_session():
+    """GPU 利用可能なら CUDA でセッション作成（キャッシュ）"""
+    global _rembg_session
+    if _rembg_session is not None:
+        return _rembg_session
+    try:
+        import onnxruntime as ort
+        from rembg.session_factory import new_session
+        providers = ort.get_available_providers()
+        if "CUDAExecutionProvider" in providers:
+            _rembg_session = new_session("u2net", providers=["CUDAExecutionProvider", "CPUExecutionProvider"])
+        else:
+            _rembg_session = new_session("u2net")
+    except Exception:
+        from rembg.session_factory import new_session
+        _rembg_session = new_session("u2net")
+    return _rembg_session
+
+
 def remove_background(input_path, output_path):
     """画像の背景を削除する（rembg 使用）
-    出力は透過 PNG のみ
+    出力は透過 PNG のみ。GPU 利用可能時は自動で CUDA 使用
     """
     from PIL import Image
     from rembg import remove as rembg_remove
 
+    session = _get_rembg_session()
     print("[1/3] 画像を読み込み中...")
     input_img = Image.open(input_path).convert("RGB")
     w, h = input_img.size
     print(f"      入力: {w}x{h}px")
 
     print("[2/3] 背景削除中...")
-    output_img = rembg_remove(input_img)
+    output_img = rembg_remove(input_img, session=session)
 
     print("[3/3] 保存中...")
     output_img.save(output_path, "PNG")
@@ -217,6 +240,10 @@ def convert(input_path, output_path, quality=95):
     print(f"      保存しました: {output_path}")
 
 def upscale(input_path, output_path, mode="photo", scale=4):
+    import torch
+    use_gpu = torch.cuda.is_available()
+    tile_size = 0 if use_gpu else 256  # GPU時はタイル不要で高速化
+
     print("[1/4] モデルを読み込み中...")
     if mode == "anime":
         model = RRDBNet(num_in_ch=3, num_out_ch=3, num_feat=64,
@@ -231,10 +258,10 @@ def upscale(input_path, output_path, mode="photo", scale=4):
         scale=4,
         model_path=model_path,
         model=model,
-        tile=256,        # CPU用にタイル分割処理
+        tile=tile_size,
         tile_pad=10,
         pre_pad=0,
-        half=False       # CPUはfloat32
+        half=use_gpu       # GPU時はfp16で高速化
     )
     print("      モデル読み込み完了")
 

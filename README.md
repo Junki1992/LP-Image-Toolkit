@@ -17,6 +17,11 @@ pip install rembg onnxruntime  # 背景削除用
 brew install ffmpeg  # macOS
 ```
 
+### GPU で高速化（オプション・NVIDIA のみ）
+**NVIDIA GPU + CUDA** が使える環境（Windows/Linux）の場合のみ有効です。Mac では CPU で動作します。
+- **アップスケール**: PyTorch が CUDA を検出すれば自動で GPU 使用（fp16）
+- **背景削除**: `pip install onnxruntime-gpu` で GPU 使用可能（NVIDIA 環境のみ）
+
 ## Web アプリの起動
 
 ```bash
