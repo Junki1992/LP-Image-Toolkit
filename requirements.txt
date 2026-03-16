@@ -11,3 +11,8 @@ gfpgan
 # 背景削除
 rembg>=2.0.0
 onnxruntime>=1.14.0
+
+# テキスト編集（OCR。PaddleOCR を優先、日本語精度が高い）
+paddlepaddle>=2.5.0
+paddleocr>=2.7.0
+easyocr>=1.7.0

@@ -17,6 +17,7 @@ from flask import Flask, Response, render_template, request, send_file, jsonify
 from werkzeug.utils import secure_filename
 
 from upscale import convert, crop, optimize, optimize_video, remove_background, upscale
+from textedit import detect_text, replace_text
 
 STEP_LABELS = {
     "removebg": "背景削除",
@@ -24,6 +25,7 @@ STEP_LABELS = {
     "upscale": "アップスケール",
     "optimize": "軽量化",
     "convert": "形式変換",
+    "textedit": "テキスト編集",
 }
 
 # パイプラインジョブ用（job_id -> {queue, result_path, filename, error, tmpdir}）
@@ -90,12 +92,123 @@ def process_one(input_path, output_path, mode, opts, progress_callback=None):
         quality = int(opts.get("quality", 95))
         crop(str(input_path), str(output_path), x_pct, y_pct, w_pct, h_pct, quality)
         return None
+    elif mode == "textedit":
+        old_text = opts.get("textedit_old", "").strip()
+        new_text = opts.get("textedit_new", "").strip()
+        if not old_text or not new_text:
+            raise ValueError("置換元・置換先のテキストを両方入力してください")
+        crop = None
+        x = opts.get("textedit_crop_x_pct")
+        y = opts.get("textedit_crop_y_pct")
+        w = opts.get("textedit_crop_w_pct")
+        h = opts.get("textedit_crop_h_pct")
+        if x is not None and y is not None and w is not None and h is not None:
+            try:
+                xf, yf, wf, hf = float(x), float(y), float(w), float(h)
+                if (xf, yf, wf, hf) != (0, 0, 100, 100):
+                    crop = (xf, yf, wf, hf)
+            except (ValueError, TypeError):
+                pass
+        font_size_override = None
+        if opts.get("textedit_font_size"):
+            try:
+                fs = int(opts.get("textedit_font_size"))
+                if 8 <= fs <= 120:
+                    font_size_override = fs
+            except (ValueError, TypeError):
+                pass
+        text_color_override = None
+        hex_color = opts.get("textedit_text_color", "").strip()
+        if hex_color:
+            hc = hex_color.lstrip("#")
+            if len(hc) >= 6 and all(c in "0123456789aAbBcCdDeEfF" for c in hc[:6]):
+                try:
+                    text_color_override = (int(hc[0:2], 16), int(hc[2:4], 16), int(hc[4:6], 16))
+                except (ValueError, TypeError):
+                    pass
+        bg_color_override = None
+        hex_bg = opts.get("textedit_bg_color", "").strip()
+        if hex_bg:
+            hc = hex_bg.lstrip("#")
+            if len(hc) >= 6 and all(c in "0123456789aAbBcCdDeEfF" for c in hc[:6]):
+                try:
+                    bg_color_override = (int(hc[0:2], 16), int(hc[2:4], 16), int(hc[4:6], 16))
+                except (ValueError, TypeError):
+                    pass
+        position_offset = None
+        px, py = opts.get("textedit_pos_x"), opts.get("textedit_pos_y")
+        if px and py:
+            try:
+                position_offset = (int(px), int(py))
+            except (ValueError, TypeError):
+                pass
+        outline_color_override = None
+        hex_outline = opts.get("textedit_outline_color", "").strip()
+        if hex_outline:
+            hc = hex_outline.lstrip("#")
+            if len(hc) >= 6 and all(c in "0123456789aAbBcCdDeEfF" for c in hc[:6]):
+                try:
+                    outline_color_override = (int(hc[0:2], 16), int(hc[2:4], 16), int(hc[4:6], 16))
+                except (ValueError, TypeError):
+                    pass
+        outline_width_override = None
+        if opts.get("textedit_outline_width"):
+            try:
+                ow = int(opts.get("textedit_outline_width"))
+                if 0 <= ow <= 12:
+                    outline_width_override = ow
+            except (ValueError, TypeError):
+                pass
+        replace_text(str(input_path), str(output_path), old_text, new_text, crop=crop, progress_callback=progress_callback,
+                    font_size_override=font_size_override, text_color_override=text_color_override, bg_color_override=bg_color_override, position_offset=position_offset,
+                    outline_color_override=outline_color_override, outline_width_override=outline_width_override)
+        return None
     return None
 
 
 @app.route("/")
 def index():
     return render_template("index.html")
+
+
+@app.route("/detect-text", methods=["POST"])
+def detect_text_route():
+    """画像からテキストを検出して返す（テキスト編集モード用）"""
+    try:
+        file = request.files.get("file")
+        if not file or not file.filename:
+            return jsonify({"error": "画像が選択されていません"}), 400
+        if not allowed_file(file.filename):
+            return jsonify({"error": "画像ファイルのみ対応です"}), 400
+        if is_video(file.filename):
+            return jsonify({"error": "動画は対応していません。画像を選択してください"}), 400
+
+        suffix = Path(file.filename).suffix or ".png"
+        with tempfile.NamedTemporaryFile(suffix=suffix, delete=False) as tmp:
+            tmp_path = tmp.name
+        try:
+            file.save(tmp_path)
+            crop = None
+            x = request.form.get("textedit_crop_x_pct")
+            y = request.form.get("textedit_crop_y_pct")
+            w = request.form.get("textedit_crop_w_pct")
+            h = request.form.get("textedit_crop_h_pct")
+            if x is not None and y is not None and w is not None and h is not None:
+                try:
+                    xf, yf, wf, hf = float(x), float(y), float(w), float(h)
+                    if (xf, yf, wf, hf) != (0, 0, 100, 100):
+                        crop = (xf, yf, wf, hf)
+                except (ValueError, TypeError):
+                    pass
+            texts, engine = detect_text(tmp_path, crop=crop)
+            return jsonify({"texts": texts, "engine": engine})
+        finally:
+            try:
+                os.unlink(tmp_path)
+            except OSError:
+                pass
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
 
 
 @app.route("/process", methods=["POST"])
@@ -231,10 +344,10 @@ def process():
         thread.start()
         return jsonify({"job_id": job_id}), 202
 
-    if mode in ("convert", "upscale", "removebg", "crop"):
+    if mode in ("convert", "upscale", "removebg", "crop", "textedit"):
         files = [f for f in files if not is_video(f.filename)]
         if not files:
-            return jsonify({"error": "形式変換・アップスケール・背景削除・トリミングは画像のみ対応です。動画は軽量化モードでどうぞ。"}), 400
+            return jsonify({"error": "形式変換・拡大・背景削除・トリミング・テキスト編集は画像のみ対応です。動画は軽量化モードでどうぞ。"}), 400
     ext = request.form.get("output_format", "png")
     if mode == "removebg":
         ext = "png"  # 背景削除は透過 PNG 固定

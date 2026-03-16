@@ -174,6 +174,66 @@
       margin-bottom: 0.4rem;
     }
 
+    .textedit-detect-wrap {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      margin-bottom: 0.5rem;
+    }
+    .btn-textedit-detect {
+      padding: 0.5rem 1rem;
+      font-size: 0.85rem;
+      background: var(--accent);
+      color: white;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+    }
+    .btn-textedit-detect:hover:not(:disabled) {
+      background: var(--accent-hover);
+    }
+    .btn-textedit-detect:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+    .textedit-detect-status {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+    }
+    .textedit-detected-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+      margin-top: 0.5rem;
+      min-height: 2rem;
+    }
+    .textedit-detected-chip {
+      padding: 0.35rem 0.6rem;
+      background: var(--surface-hover);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      font-size: 0.8rem;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    .textedit-detected-chip:hover {
+      background: var(--accent);
+      border-color: var(--accent);
+    }
+    .textedit-detected-chip .chip-edit {
+      margin-left: 0.25rem;
+      padding: 0 0.25rem;
+      font-size: 0.75rem;
+      opacity: 0.7;
+      background: transparent;
+      border: none;
+      cursor: pointer;
+      vertical-align: middle;
+    }
+    .textedit-detected-chip .chip-edit:hover {
+      opacity: 1;
+    }
+
     .form-hint {
       font-size: 0.75rem;
       color: var(--text-muted);
@@ -295,6 +355,68 @@
       border-radius: 8px;
       border: 1px solid var(--border);
     }
+    .textedit-crop-zoom-bar,
+    .textedit-preview-zoom-bar {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      margin-bottom: 0.5rem;
+    }
+    .textedit-zoom-label {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+    }
+    .btn-zoom {
+      padding: 0.25rem 0.5rem;
+      font-size: 0.8rem;
+      min-width: 2.5rem;
+    }
+    .btn-zoom.active {
+      background: var(--accent);
+      color: white;
+      border-color: var(--accent);
+    }
+    .textedit-advanced-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 1rem;
+      align-items: flex-end;
+    }
+    .textedit-advanced-item {
+      display: flex;
+      align-items: center;
+      gap: 0.35rem;
+    }
+    .textedit-advanced-label {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      white-space: nowrap;
+    }
+    .textedit-unit {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+    }
+    .textedit-live-preview {
+      margin-top: 1rem;
+      padding-top: 1rem;
+      border-top: 1px solid var(--border);
+    }
+    .textedit-live-preview-label {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      margin-bottom: 0.5rem;
+    }
+    .textedit-live-preview-canvas-wrap {
+      max-width: 100%;
+      max-height: 480px;
+      overflow: auto;
+      background: var(--bg);
+      border-radius: 8px;
+      border: 1px solid var(--border);
+    }
+    .textedit-live-preview-canvas-wrap canvas {
+      display: block;
+    }
 
     .crop-canvas-inner {
       position: relative;
@@ -308,6 +430,13 @@
       max-width: 100%;
       max-height: 340px;
       vertical-align: bottom;
+    }
+    .textedit-crop-wrap {
+      max-height: 480px;
+    }
+    .textedit-crop-wrap .crop-canvas-inner img {
+      max-width: none;
+      max-height: none;
     }
 
     .crop-overlay {
@@ -402,6 +531,59 @@
 
     .advanced-toggle.open .arrow {
       transform: rotate(90deg);
+    }
+
+    .notice-section {
+      margin-top: 1.5rem;
+      margin-bottom: 1rem;
+    }
+    .notice-toggle {
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+      padding: 0.5rem 0;
+      color: var(--text-muted);
+      font-size: 0.8rem;
+      cursor: pointer;
+      user-select: none;
+      border: none;
+      background: none;
+      font-family: inherit;
+    }
+    .notice-toggle:hover {
+      color: var(--accent);
+    }
+    .notice-toggle .arrow {
+      transition: transform 0.2s;
+      font-size: 0.6rem;
+    }
+    .notice-toggle.open .arrow {
+      transform: rotate(90deg);
+    }
+    .notice-content {
+      display: none;
+      margin-top: 0.75rem;
+      padding: 1rem;
+      background: rgba(0,0,0,0.2);
+      border-radius: 8px;
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      line-height: 1.7;
+    }
+    .notice-content.visible {
+      display: block;
+    }
+    .notice-content h4 {
+      font-size: 0.85rem;
+      color: var(--text);
+      margin: 0.75rem 0 0.25rem;
+    }
+    .notice-content h4:first-child {
+      margin-top: 0;
+    }
+    .notice-content ul {
+      margin: 0.25rem 0 0 1rem;
+      padding: 0;
     }
 
     .advanced-opts {
@@ -846,6 +1028,10 @@
       color: var(--text-muted);
       margin-bottom: 0.5rem;
     }
+    .result-preview-label .hint {
+      font-size: 0.75rem;
+      opacity: 0.8;
+    }
 
     .result-preview-wrap {
       display: flex;
@@ -864,12 +1050,52 @@
       border-radius: 8px;
       overflow: auto;
       max-height: 400px;
+      cursor: zoom-in;
     }
-
     .result-preview-wrap img {
       max-width: 100%;
       max-height: 360px;
       object-fit: contain;
+    }
+
+    .preview-zoom-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      z-index: 1000;
+      background: rgba(0,0,0,0.9);
+      align-items: center;
+      justify-content: center;
+      padding: 2rem;
+      cursor: zoom-out;
+    }
+    .preview-zoom-overlay.visible {
+      display: flex;
+    }
+    .preview-zoom-overlay img {
+      max-width: 100%;
+      max-height: 100%;
+      object-fit: contain;
+      cursor: default;
+    }
+    .preview-zoom-close {
+      position: absolute;
+      top: 1rem;
+      right: 1rem;
+      width: 40px;
+      height: 40px;
+      border: none;
+      background: var(--surface);
+      color: var(--text);
+      border-radius: 8px;
+      font-size: 1.25rem;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .preview-zoom-close:hover {
+      background: var(--surface-hover);
     }
 
     footer {
@@ -884,7 +1110,7 @@
   <div class="container">
     <header>
       <h1>ImgCraft</h1>
-      <p class="subtitle">拡大・形式変換・軽量化・背景削除・トリミング・パイプライン（画像・動画）</p>
+      <p class="subtitle">拡大・形式変換・軽量化・背景削除・トリミング・テキスト編集・パイプライン（画像・動画）</p>
     </header>
 
     <form id="form">
@@ -907,6 +1133,7 @@
           <button type="button" class="mode-tab" data-mode="upscale">拡大</button>
           <button type="button" class="mode-tab" data-mode="removebg">背景削除</button>
           <button type="button" class="mode-tab" data-mode="crop">トリミング</button>
+          <button type="button" class="mode-tab" data-mode="textedit">テキスト編集</button>
           <button type="button" class="mode-tab" data-mode="pipeline">パイプライン</button>
         </div>
 
@@ -1085,6 +1312,119 @@
           </div>
         </div>
 
+        <div id="optionsTextedit" class="options">
+          <div id="texteditCropPreviewContainer" class="crop-preview-container" style="display: none;">
+            <div class="crop-preview-label">編集範囲を指定（オプション・拡大して細かく選択できます）</div>
+            <div class="textedit-crop-zoom-bar">
+              <span class="textedit-zoom-label">拡大:</span>
+              <button type="button" class="btn btn-zoom" data-zoom="1">1x</button>
+              <button type="button" class="btn btn-zoom" data-zoom="2">2x</button>
+              <button type="button" class="btn btn-zoom" data-zoom="3">3x</button>
+              <button type="button" class="btn btn-zoom" data-zoom="4">4x</button>
+            </div>
+            <div class="crop-canvas-wrap textedit-crop-wrap">
+              <div class="crop-canvas-inner" id="texteditCropCanvasInner">
+                <img id="texteditCropPreviewImg" src="" alt="">
+                <div class="crop-overlay" id="texteditCropOverlay">
+                  <div class="crop-shade" id="texteditCropShadeT"></div>
+                  <div class="crop-shade" id="texteditCropShadeB"></div>
+                  <div class="crop-shade" id="texteditCropShadeL"></div>
+                  <div class="crop-shade" id="texteditCropShadeR"></div>
+                </div>
+                <div class="crop-selection" id="texteditCropSelection">
+                  <div class="crop-handle" data-handle="nw"></div>
+                  <div class="crop-handle" data-handle="ne"></div>
+                  <div class="crop-handle" data-handle="sw"></div>
+                  <div class="crop-handle" data-handle="se"></div>
+                </div>
+              </div>
+            </div>
+            <input type="hidden" name="textedit_crop_x_pct" id="texteditCropXPct" value="0">
+            <input type="hidden" name="textedit_crop_y_pct" id="texteditCropYPct" value="0">
+            <input type="hidden" name="textedit_crop_w_pct" id="texteditCropWPct" value="100">
+            <input type="hidden" name="textedit_crop_h_pct" id="texteditCropHPct" value="100">
+          </div>
+          <div class="form-group">
+            <label>検出されたテキスト</label>
+            <div id="texteditDetectWrap" class="textedit-detect-wrap">
+              <button type="button" class="btn btn-textedit-detect" id="texteditDetectBtn" disabled>
+                テキストを検出
+              </button>
+              <span id="texteditDetectStatus" class="textedit-detect-status"></span>
+            </div>
+            <div id="texteditDetectedList" class="textedit-detected-list"></div>
+            <p class="form-hint">画像を選択して「テキストを検出」をクリック。編集範囲を指定すると精度が上がります。検出されたテキストをクリックで置換元にコピー、✎で編集できます。<strong>編集範囲指定＋OCR 未検出時は置換元を手入力→置換したいテキストだけを囲むように狭く選択してください（広いと隣のテキストも消えます）。</strong></p>
+          </div>
+          <div class="form-group">
+            <label>置換元のテキスト</label>
+            <input type="text" name="textedit_old" id="texteditOldInput" placeholder="例: 48% または 48%OFF" autocomplete="off">
+            <p class="form-hint">画像内で検索するテキスト（部分一致）。上で検出されたテキストを指定してください。</p>
+          </div>
+          <div class="form-group">
+            <label>置換先のテキスト</label>
+            <input type="text" name="textedit_new" placeholder="例: 50% または 50%OFF" autocomplete="off">
+          </div>
+          <div class="form-group textedit-advanced">
+            <label>置換テキストの見た目（オプション）</label>
+            <div class="textedit-advanced-row">
+              <div class="textedit-advanced-item">
+                <label class="textedit-advanced-label">フォントサイズ</label>
+                <input type="number" name="textedit_font_size" placeholder="自動" min="8" max="120" step="1" style="width: 5rem;">
+                <span class="textedit-unit">px</span>
+              </div>
+              <div class="textedit-advanced-item">
+                <label class="textedit-advanced-label">文字色</label>
+                <input type="color" id="texteditColorPicker" value="#000000" title="文字色" style="width: 2.5rem; height: 1.8rem; padding: 2px; cursor: pointer;">
+                <input type="text" name="textedit_text_color" id="texteditColorHex" placeholder="自動" style="width: 5rem; font-family: monospace;" maxlength="7" title="空欄で自動。例: #000000">
+              </div>
+              <div class="textedit-advanced-item">
+                <label class="textedit-advanced-label">背景色</label>
+                <input type="color" id="texteditBgColorPicker" value="#c8c8c8" title="背景色" style="width: 2.5rem; height: 1.8rem; padding: 2px; cursor: pointer;">
+                <input type="text" name="textedit_bg_color" id="texteditBgColorHex" placeholder="自動" style="width: 5rem; font-family: monospace;" maxlength="7" title="空欄で自動。例: #22c55e">
+              </div>
+              <div class="textedit-advanced-item">
+                <label class="textedit-advanced-label">縁色</label>
+                <input type="color" id="texteditOutlineColorPicker" value="#000000" title="縁色（白文字＋黒縁など）" style="width: 2.5rem; height: 1.8rem; padding: 2px; cursor: pointer;">
+                <input type="text" name="textedit_outline_color" id="texteditOutlineColorHex" placeholder="自動" style="width: 5rem; font-family: monospace;" maxlength="7" title="空欄で自動。白文字＋黒縁: 文字色 #ffffff、縁色 #000000">
+              </div>
+              <div class="textedit-advanced-item">
+                <label class="textedit-advanced-label">縁の太さ</label>
+                <input type="number" name="textedit_outline_width" placeholder="自動" min="0" max="12" step="1" style="width: 4rem;">
+                <span class="textedit-unit">px</span>
+              </div>
+              <div class="textedit-advanced-item">
+                <label class="textedit-advanced-label">位置オフセット</label>
+                <input type="number" name="textedit_pos_x" placeholder="X" style="width: 3.5rem;" title="右: + 左: -">
+                <input type="number" name="textedit_pos_y" placeholder="Y" style="width: 3.5rem;" title="下: + 上: -">
+                <span class="textedit-unit">px</span>
+              </div>
+            </div>
+            <p class="form-hint">空欄のままなら自動。白文字＋黒縁: 文字色 #ffffff、縁色 #000000 を指定。</p>
+            <div id="texteditLivePreviewWrap" class="textedit-live-preview" style="display: none;">
+              <div class="textedit-live-preview-label">プレビュー（全体像・置換後の見た目をシミュレート）</div>
+              <div class="textedit-preview-zoom-bar">
+                <span class="textedit-zoom-label">拡大:</span>
+                <button type="button" class="btn btn-zoom" data-preview-zoom="1">1x</button>
+                <button type="button" class="btn btn-zoom" data-preview-zoom="2">2x</button>
+                <button type="button" class="btn btn-zoom" data-preview-zoom="3">3x</button>
+                <button type="button" class="btn btn-zoom" data-preview-zoom="4">4x</button>
+              </div>
+              <div class="textedit-live-preview-canvas-wrap">
+                <canvas id="texteditLivePreviewCanvas"></canvas>
+              </div>
+            </div>
+          </div>
+          <div class="form-group">
+            <label>出力形式</label>
+            <select name="output_format" data-mode="textedit">
+              <option value="png">PNG</option>
+              <option value="jpg">JPEG</option>
+              <option value="webp">WebP</option>
+            </select>
+          </div>
+          <p class="form-hint" style="margin-top: 0.5rem;">PaddleOCR を優先使用（日本語精度が高い）。編集範囲を指定した場合は PaddleOCR と EasyOCR の両方で検出し、長いテキストを優先して統合します。初回実行時にモデルをダウンロードします。</p>
+        </div>
+
         <div id="optionsPipeline" class="options">
           <div class="form-group">
             <label>処理ステップ（上から順に実行）</label>
@@ -1145,8 +1485,8 @@
           </button>
         </div>
         <div id="resultPreview" class="result-preview">
-          <div class="result-preview-label">プレビュー</div>
-          <div class="result-preview-wrap">
+          <div class="result-preview-label">プレビュー <span class="hint">（クリックで拡大）</span></div>
+          <div class="result-preview-wrap" id="resultPreviewWrap">
             <img id="resultPreviewImg" src="" alt="結果プレビュー">
           </div>
         </div>
@@ -1169,6 +1509,28 @@
       </div>
       <p id="processingElapsed" class="processing-elapsed"></p>
       <button type="button" class="btn-cancel" id="cancelBtn">キャンセル</button>
+    </div>
+
+    <div class="preview-zoom-overlay" id="previewZoomOverlay">
+      <button type="button" class="preview-zoom-close" id="previewZoomClose" aria-label="閉じる">×</button>
+      <img id="previewZoomImg" src="" alt="拡大プレビュー">
+    </div>
+
+    <div class="notice-section">
+      <button type="button" class="notice-toggle" id="noticeToggle" aria-expanded="false">
+        <span class="arrow">▶</span>
+        <span>利用上の注意</span>
+      </button>
+      <div class="notice-content" id="noticeContent">
+        <h4>リソース消費（メモリ・ディスク）</h4>
+        <p>アップロード上限は500MBです。大きな動画・画像の処理はメモリ・ディスクを多く消費します。拡大処理は高解像度画像でGPUメモリを大量に使用します。</p>
+        <h4>ファイルアップロード</h4>
+        <p>信頼できるファイルのみアップロードしてください。悪意あるファイルが原因で問題が発生する可能性があります。</p>
+        <h4>パラメータ</h4>
+        <p>拡大倍率・出力サイズなどに極端な値を指定すると、メモリ不足やクラッシュの原因になる場合があります。</p>
+        <h4>免責事項</h4>
+        <p>本アプリは現状のまま提供されます。処理結果やデータの損傷について、開発者は一切の責任を負いません。利用は自己責任でお願いします。</p>
+      </div>
     </div>
 
     <footer>
@@ -1196,13 +1558,14 @@
     let resultPreviewUrl = null;
     let processingElapsedInterval = null;
 
-    const MODE_LABELS = { upscale: '拡大', convert: '形式変換', optimize: '軽量化', removebg: '背景削除', crop: 'トリミング' };
+    const MODE_LABELS = { upscale: '拡大', convert: '形式変換', optimize: '軽量化', removebg: '背景削除', crop: 'トリミング', textedit: 'テキスト編集' };
     const MODE_DESCRIPTIONS = {
       upscale: '画像をAIで拡大しています',
       convert: '形式を変換しています',
       optimize: '画像を圧縮・最適化しています',
       removebg: '背景をAIで検出・削除しています（数分かかることがあります）',
-      crop: '指定範囲を切り抜いています'
+      crop: '指定範囲を切り抜いています',
+      textedit: 'テキストを検出・置換しています'
     };
 
     function startProcessingFeedback(mode, fileIndex, total) {
@@ -1368,6 +1731,23 @@
       document.getElementById('resultPreview').classList.add('visible');
     }
 
+    // プレビュー拡大
+    const resultPreviewWrap = document.getElementById('resultPreviewWrap');
+    const previewZoomOverlay = document.getElementById('previewZoomOverlay');
+    const previewZoomImg = document.getElementById('previewZoomImg');
+    const previewZoomClose = document.getElementById('previewZoomClose');
+    if (resultPreviewWrap && previewZoomOverlay) {
+      resultPreviewWrap.addEventListener('click', () => {
+        if (!resultPreviewUrl) return;
+        previewZoomImg.src = resultPreviewUrl;
+        previewZoomOverlay.classList.add('visible');
+      });
+      const closeZoom = () => previewZoomOverlay.classList.remove('visible');
+      previewZoomOverlay.addEventListener('click', (e) => { if (e.target === previewZoomOverlay) closeZoom(); });
+      previewZoomClose?.addEventListener('click', closeZoom);
+      document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && previewZoomOverlay.classList.contains('visible')) closeZoom(); });
+    }
+
     // モード切り替え
     document.querySelectorAll('.mode-tab').forEach(tab => {
       tab.addEventListener('click', () => {
@@ -1380,23 +1760,131 @@
         document.getElementById(`options${mode.charAt(0).toUpperCase() + mode.slice(1)}`).classList.add('active');
 
         document.getElementById('submitBtnText').textContent = mode === 'crop' ? '切り取り' : mode === 'pipeline' ? 'パイプライン実行' : '処理を実行';
+        if (mode === 'textedit' && typeof updateTexteditLivePreview === 'function') updateTexteditLivePreview();
 
-        if (mode === 'crop') initCropPreview();
-        else if (mode === 'pipeline') {
+        if (mode === 'crop') {
+          initCropPreview();
+          document.getElementById('texteditCropPreviewContainer').style.display = 'none';
+          texteditCropDrag = null;
+        } else if (mode === 'textedit') {
+          initTexteditCropPreview();
           document.getElementById('cropPreviewContainer').style.display = 'none';
+          cropDrag = null;
+        } else if (mode === 'pipeline') {
+          document.getElementById('cropPreviewContainer').style.display = 'none';
+          document.getElementById('texteditCropPreviewContainer').style.display = 'none';
           updatePipelineCropVisibility();
           initPipelineCropPreview();
         } else {
           document.getElementById('cropPreviewContainer').style.display = 'none';
+          document.getElementById('texteditCropPreviewContainer').style.display = 'none';
           document.getElementById('pipelineCropPreview').style.display = 'none';
           cropDrag = null;
+          texteditCropDrag = null;
           document.onmousemove = null;
           document.onmouseup = null;
         }
         if (mode === 'optimize') maybeAutoCheckOptimizeVideo();
         if (mode === 'upscale') updateUpscaleOriginalSize();
+        updateTexteditDetectButton();
       });
     });
+
+    // テキスト編集: 検出ボタン・検出結果表示
+    function updateTexteditDetectButton() {
+      const btn = document.getElementById('texteditDetectBtn');
+      const list = document.getElementById('texteditDetectedList');
+      const status = document.getElementById('texteditDetectStatus');
+      if (!btn) return;
+      const imageFiles = [...fileInput.files].filter(f => !isVideoFile(f));
+      btn.disabled = !imageFiles.length || modeInput.value !== 'textedit';
+      if (modeInput.value !== 'textedit' || !imageFiles.length) {
+        list.innerHTML = '';
+        status.textContent = '';
+      }
+    }
+    let texteditDetectedTexts = [];
+    function updateTexteditDetectedList(texts) {
+      texteditDetectedTexts = texts || [];
+      const list = document.getElementById('texteditDetectedList');
+      const oldInput = document.getElementById('texteditOldInput');
+      list.innerHTML = texteditDetectedTexts.length ? texteditDetectedTexts.map((t, i) => {
+        const conf = Math.round((t.confidence || 0) * 100);
+        const escaped = escapeHtml(t.text);
+        return `<span class="textedit-detected-chip" data-index="${i}" title="クリックで置換元にコピー (信頼度${conf}%)">${escaped}<button type="button" class="chip-edit" title="編集">✎</button></span>`;
+      }).join('') : '<span class="form-hint">テキストが検出されませんでした</span>';
+      list.querySelectorAll('.textedit-detected-chip').forEach(chip => {
+        const idx = parseInt(chip.dataset.index);
+        chip.querySelector('.chip-edit')?.addEventListener('click', (e) => {
+          e.stopPropagation();
+          const current = texteditDetectedTexts[idx]?.text || '';
+          const input = document.createElement('input');
+          input.type = 'text';
+          input.value = current;
+          input.className = 'chip-edit-input';
+          input.style.cssText = 'width:100%;padding:0.2rem 0.4rem;font-size:inherit;border:1px solid var(--accent);border-radius:4px;';
+          chip.replaceChildren(input);
+          input.focus();
+          input.select();
+          const save = () => {
+            const newVal = input.value.trim();
+            if (texteditDetectedTexts[idx]) {
+              texteditDetectedTexts[idx] = { ...texteditDetectedTexts[idx], text: newVal || current };
+            }
+            updateTexteditDetectedList(texteditDetectedTexts);
+          };
+          input.addEventListener('blur', save);
+          input.addEventListener('keydown', (ev) => {
+            if (ev.key === 'Enter') { ev.preventDefault(); input.blur(); }
+            if (ev.key === 'Escape') { input.value = current; input.blur(); }
+          });
+        });
+        chip.addEventListener('click', (e) => {
+          if (e.target.classList.contains('chip-edit')) return;
+          if (oldInput && !isNaN(idx) && texteditDetectedTexts[idx]) {
+            oldInput.value = texteditDetectedTexts[idx].text || '';
+          }
+        });
+      });
+    }
+    const texteditDetectBtn = document.getElementById('texteditDetectBtn');
+    if (texteditDetectBtn) {
+      texteditDetectBtn.addEventListener('click', async () => {
+        const imageFiles = [...fileInput.files].filter(f => !isVideoFile(f));
+        if (!imageFiles.length) return;
+        const status = document.getElementById('texteditDetectStatus');
+        const list = document.getElementById('texteditDetectedList');
+        status.textContent = '検出中...';
+        list.innerHTML = '';
+        texteditDetectBtn.disabled = true;
+        try {
+          const data = new FormData();
+          data.append('file', imageFiles[0]);
+          data.append('textedit_crop_x_pct', document.getElementById('texteditCropXPct')?.value || '0');
+          data.append('textedit_crop_y_pct', document.getElementById('texteditCropYPct')?.value || '0');
+          data.append('textedit_crop_w_pct', document.getElementById('texteditCropWPct')?.value || '100');
+          data.append('textedit_crop_h_pct', document.getElementById('texteditCropHPct')?.value || '100');
+          const res = await fetch('/detect-text', { method: 'POST', body: data });
+          const text = await res.text();
+          let json;
+          try {
+            json = JSON.parse(text);
+          } catch {
+            throw new Error(res.ok ? 'サーバーが不正な応答を返しました' : `サーバーエラー (${res.status})。EasyOCRがインストールされているか確認してください。`);
+          }
+          if (!res.ok) throw new Error(json.error || '検出に失敗しました');
+          updateTexteditDetectedList(json.texts || []);
+          const engineLabel = json.engine === 'paddleocr+easyocr' ? 'PaddleOCR+EasyOCR' : (json.engine === 'paddleocr' ? 'PaddleOCR' : 'EasyOCR');
+          status.textContent = `${(json.texts || []).length}件検出 (${engineLabel})`;
+        } catch (err) {
+          status.textContent = '';
+          list.innerHTML = `<span class="form-hint" style="color: var(--error);">${escapeHtml(err.message)}</span>`;
+        } finally {
+          texteditDetectBtn.disabled = false;
+          updateTexteditDetectButton();
+        }
+      });
+    }
 
     // パイプライン
     const PIPELINE_MODES = [
@@ -1606,6 +2094,17 @@
       });
     });
 
+    // 利用上の注意の開閉
+    const noticeToggle = document.getElementById('noticeToggle');
+    const noticeContent = document.getElementById('noticeContent');
+    if (noticeToggle && noticeContent) {
+      noticeToggle.addEventListener('click', () => {
+        noticeContent.classList.toggle('visible');
+        noticeToggle.classList.toggle('open');
+        noticeToggle.setAttribute('aria-expanded', noticeContent.classList.contains('visible'));
+      });
+    }
+
     // アップスケール: 元画像サイズ表示・アスペクト比自動計算
     let upscaleOrigSize = { w: 0, h: 0 };
     let upscaleSyncing = false;
@@ -1745,6 +2244,7 @@
         if (modeInput.value === 'crop') initCropPreview();
         if (modeInput.value === 'pipeline') initPipelineCropPreview();
         if (modeInput.value === 'upscale') updateUpscaleOriginalSize();
+        updateTexteditDetectButton();
       }
     });
     fileInput.addEventListener('change', updateFileName);
@@ -1813,19 +2313,23 @@
         updateFilePreview();
         maybeAutoCheckOptimizeVideo();
         if (modeInput.value === 'crop') initCropPreview();
+        if (modeInput.value === 'textedit') initTexteditCropPreview();
         if (modeInput.value === 'pipeline') {
           updatePipelineCropVisibility();
           initPipelineCropPreview();
         }
         if (modeInput.value === 'upscale') updateUpscaleOriginalSize();
+        updateTexteditDetectButton();
       } else {
         fileName.textContent = '';
         submitBtn.disabled = true;
         document.getElementById('filePreview').innerHTML = '';
         document.getElementById('filePreview').classList.remove('visible');
         document.getElementById('cropPreviewContainer').style.display = 'none';
+        document.getElementById('texteditCropPreviewContainer').style.display = 'none';
         document.getElementById('pipelineCropPreview').style.display = 'none';
         if (modeInput.value === 'upscale') updateUpscaleOriginalSize();
+        updateTexteditDetectButton();
       }
       updateResetBtn();
     }
@@ -1834,6 +2338,306 @@
     let cropState = { x: 0, y: 0, w: 0, h: 0, imgW: 0, imgH: 0, dispW: 0, dispH: 0 };
     let cropDrag = null;
     let cropPreviewUrl = null;
+
+    // テキスト編集: 編集範囲選択UI
+    let texteditCropState = { x: 0, y: 0, w: 0, h: 0, imgW: 0, imgH: 0, dispW: 0, dispH: 0 };
+    let texteditCropDrag = null;
+    let texteditCropPreviewUrl = null;
+    let texteditCropZoom = 1;
+    let texteditPreviewZoom = 1;
+
+    function initTexteditCropPreview() {
+      const container = document.getElementById('texteditCropPreviewContainer');
+      const imgEl = document.getElementById('texteditCropPreviewImg');
+      const files = [...fileInput.files].filter(f => !isVideoFile(f));
+      if (modeInput.value !== 'textedit' || !files.length) {
+        container.style.display = 'none';
+        return;
+      }
+      if (texteditCropPreviewUrl) URL.revokeObjectURL(texteditCropPreviewUrl);
+      texteditCropPreviewUrl = URL.createObjectURL(files[0]);
+      imgEl.src = texteditCropPreviewUrl;
+      imgEl.onload = () => {
+        container.style.display = 'block';
+        applyTexteditCropZoom();
+        setupTexteditCropZoomButtons();
+        setupTexteditCropEvents();
+        updateTexteditLivePreview();
+      };
+    }
+
+    function applyTexteditCropZoom() {
+      const imgEl = document.getElementById('texteditCropPreviewImg');
+      const natW = imgEl.naturalWidth;
+      const natH = imgEl.naturalHeight;
+      const zoom = texteditCropZoom;
+      const dispW = natW * zoom;
+      const dispH = natH * zoom;
+      imgEl.style.width = dispW + 'px';
+      imgEl.style.height = dispH + 'px';
+      imgEl.style.maxWidth = 'none';
+      imgEl.style.maxHeight = 'none';
+      const prevDispW = texteditCropState.dispW || 0;
+      const prevDispH = texteditCropState.dispH || 0;
+      const xPct = prevDispW ? (texteditCropState.x / prevDispW) * 100 : 0;
+      const yPct = prevDispH ? (texteditCropState.y / prevDispH) * 100 : 0;
+      const wPct = prevDispW ? (texteditCropState.w / prevDispW) * 100 : 100;
+      const hPct = prevDispH ? (texteditCropState.h / prevDispH) * 100 : 100;
+      texteditCropState = {
+        x: (xPct / 100) * dispW,
+        y: (yPct / 100) * dispH,
+        w: (wPct / 100) * dispW,
+        h: (hPct / 100) * dispH,
+        imgW: natW,
+        imgH: natH,
+        dispW,
+        dispH
+      };
+      updateTexteditCropUI();
+    }
+
+    function setupTexteditColorSync() {
+      [[document.getElementById('texteditColorPicker'), document.getElementById('texteditColorHex')],
+       [document.getElementById('texteditBgColorPicker'), document.getElementById('texteditBgColorHex')],
+       [document.getElementById('texteditOutlineColorPicker'), document.getElementById('texteditOutlineColorHex')]].forEach(([picker, hexInput]) => {
+        if (!picker || !hexInput) return;
+        picker.addEventListener('input', () => { hexInput.value = picker.value; updateTexteditLivePreview(); });
+        picker.addEventListener('change', () => { hexInput.value = picker.value; updateTexteditLivePreview(); });
+        hexInput.addEventListener('input', () => {
+          const v = hexInput.value.trim();
+          if (/^#?[0-9a-fA-F]{6}$/.test(v.replace('#',''))) picker.value = v.startsWith('#') ? v : '#' + v;
+          updateTexteditLivePreview();
+        });
+      });
+    }
+    setupTexteditColorSync();
+
+    function updateTexteditLivePreview() {
+      const wrap = document.getElementById('texteditLivePreviewWrap');
+      const canvas = document.getElementById('texteditLivePreviewCanvas');
+      const newInput = document.querySelector('#optionsTextedit input[name="textedit_new"]');
+      const fontInput = document.querySelector('#optionsTextedit input[name="textedit_font_size"]');
+      const colorInput = document.getElementById('texteditColorHex');
+      const outlineColorInput = document.getElementById('texteditOutlineColorHex');
+      const outlineWidthInput = document.querySelector('#optionsTextedit input[name="textedit_outline_width"]');
+      const posXInput = document.querySelector('#optionsTextedit input[name="textedit_pos_x"]');
+      const posYInput = document.querySelector('#optionsTextedit input[name="textedit_pos_y"]');
+      if (!wrap || !canvas || !newInput) return;
+      const newText = newInput.value.trim();
+      const files = [...fileInput.files].filter(f => !isVideoFile(f));
+      if (!newText || !files.length || modeInput.value !== 'textedit') {
+        wrap.style.display = 'none';
+        return;
+      }
+      wrap.style.display = 'block';
+      const img = new Image();
+      img.onload = () => {
+        const natW = img.naturalWidth, natH = img.naturalHeight;
+        const xPct = parseFloat(document.getElementById('texteditCropXPct')?.value || 0) / 100;
+        const yPct = parseFloat(document.getElementById('texteditCropYPct')?.value || 0) / 100;
+        const wPct = parseFloat(document.getElementById('texteditCropWPct')?.value || 100) / 100;
+        const hPct = parseFloat(document.getElementById('texteditCropHPct')?.value || 100) / 100;
+        const cropX = Math.floor(natW * xPct), cropY = Math.floor(natH * yPct);
+        const cropW = Math.max(1, Math.floor(natW * wPct)), cropH = Math.max(1, Math.floor(natH * hPct));
+        const zoom = texteditPreviewZoom;
+        const cw = Math.round(natW * zoom), ch = Math.round(natH * zoom);
+        const scale = zoom;
+        const scX = Math.round(cropX * scale), scY = Math.round(cropY * scale);
+        const scW = Math.max(1, Math.round(cropW * scale)), scH = Math.max(1, Math.round(cropH * scale));
+        canvas.width = cw;
+        canvas.height = ch;
+        canvas.style.width = cw + 'px';
+        canvas.style.height = ch + 'px';
+        canvas.style.maxWidth = 'none';
+        canvas.style.maxHeight = 'none';
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0, natW, natH, 0, 0, cw, ch);
+        let bgR = 200, bgG = 200, bgB = 200;
+        try {
+          const temp = document.createElement('canvas');
+          temp.width = cropW;
+          temp.height = cropH;
+          const tctx = temp.getContext('2d');
+          tctx.drawImage(img, cropX, cropY, cropW, cropH, 0, 0, cropW, cropH);
+          const cs = Math.max(4, Math.min(cropW, cropH) >> 3);
+          const corners = [
+            tctx.getImageData(0, 0, cs, cs),
+            tctx.getImageData(Math.max(0, cropW - cs), 0, cs, cs),
+            tctx.getImageData(0, Math.max(0, cropH - cs), cs, cs),
+            tctx.getImageData(Math.max(0, cropW - cs), Math.max(0, cropH - cs), cs, cs)
+          ].filter(i => i && i.data);
+          let r = 0, g = 0, b = 0, n = 0;
+          corners.forEach(im => {
+            for (let i = 0; i < im.data.length; i += 4) {
+              r += im.data[i]; g += im.data[i + 1]; b += im.data[i + 2]; n++;
+            }
+          });
+          if (n) { bgR = Math.round(r / n); bgG = Math.round(g / n); bgB = Math.round(b / n); }
+        } catch (_) {}
+        const bgColorVal = (document.getElementById('texteditBgColorHex')?.value || '').trim().replace(/^#/, '');
+        if (bgColorVal && /^[0-9a-fA-F]{6}$/.test(bgColorVal)) {
+          bgR = parseInt(bgColorVal.slice(0,2), 16);
+          bgG = parseInt(bgColorVal.slice(2,4), 16);
+          bgB = parseInt(bgColorVal.slice(4,6), 16);
+        }
+        ctx.fillStyle = `rgb(${bgR},${bgG},${bgB})`;
+        ctx.fillRect(scX, scY, scW, scH);
+        const fontSize = parseInt(fontInput?.value)
+          ? Math.round(parseInt(fontInput.value) * scale)
+          : Math.max(14, Math.min(72, Math.floor(scH * 0.35)));
+        const colorVal = (colorInput?.value || '').trim().replace(/^#/, '');
+        let color = (colorVal && /^[0-9a-fA-F]{6}$/.test(colorVal)) ? ('#' + colorVal) : null;
+        if (!color) {
+          const lum = 0.299 * bgR + 0.587 * bgG + 0.114 * bgB;
+          color = lum < 140 ? '#ffffff' : '#000000';
+        }
+        const dx = parseInt(posXInput?.value) || 0;
+        const dy = parseInt(posYInput?.value) || 0;
+        ctx.font = `bold ${fontSize}px "Hiragino Sans", "Hiragino Kaku Gothic ProN", "Yu Gothic", sans-serif`;
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        const tx = scX + scW / 2 + dx;
+        const ty = scY + scH / 2 + dy;
+        const outlineHex = (outlineColorInput?.value || document.getElementById('texteditOutlineColorPicker')?.value || '').trim().replace(/^#/, '');
+        const outlineColor = (outlineHex && /^[0-9a-fA-F]{6}$/.test(outlineHex)) ? ('#' + outlineHex) : null;
+        const outlineWUser = parseInt(outlineWidthInput?.value);
+        const outlineW = outlineColor ? (outlineWUser >= 0 ? Math.round(outlineWUser * scale) : Math.max(1, Math.floor(fontSize * 0.06))) : 0;
+        if (outlineW > 0 && outlineColor) {
+          ctx.strokeStyle = outlineColor;
+          ctx.lineWidth = outlineW;
+          ctx.lineJoin = 'round';
+          ctx.strokeText(newText, tx, ty);
+        }
+        ctx.fillStyle = color;
+        ctx.fillText(newText, tx, ty);
+      };
+      img.src = texteditCropPreviewUrl || URL.createObjectURL(files[0]);
+    }
+    function setupTexteditLivePreviewListeners() {
+      ['textedit_new', 'textedit_font_size', 'textedit_pos_x', 'textedit_pos_y', 'textedit_text_color', 'textedit_bg_color', 'textedit_outline_color', 'textedit_outline_width'].forEach(name => {
+        const el = document.querySelector(`#optionsTextedit [name="${name}"]`);
+        if (el) {
+          el.addEventListener('input', updateTexteditLivePreview);
+          el.addEventListener('change', updateTexteditLivePreview);
+        }
+      });
+    }
+    setupTexteditLivePreviewListeners();
+
+    function setupTexteditPreviewZoomButtons() {
+      document.querySelectorAll('.textedit-preview-zoom-bar .btn-zoom[data-preview-zoom]').forEach(btn => {
+        btn.classList.toggle('active', parseInt(btn.dataset.previewZoom) === texteditPreviewZoom);
+        btn.onclick = () => {
+          texteditPreviewZoom = parseInt(btn.dataset.previewZoom);
+          document.querySelectorAll('.textedit-preview-zoom-bar .btn-zoom[data-preview-zoom]').forEach(b =>
+            b.classList.toggle('active', parseInt(b.dataset.previewZoom) === texteditPreviewZoom));
+          updateTexteditLivePreview();
+        };
+      });
+    }
+    setupTexteditPreviewZoomButtons();
+
+    function setupTexteditCropZoomButtons() {
+      document.querySelectorAll('.textedit-crop-zoom-bar .btn-zoom').forEach(btn => {
+        btn.classList.toggle('active', parseInt(btn.dataset.zoom) === texteditCropZoom);
+        btn.onclick = () => {
+          texteditCropZoom = parseInt(btn.dataset.zoom);
+          document.querySelectorAll('.textedit-crop-zoom-bar .btn-zoom').forEach(b => b.classList.toggle('active', parseInt(b.dataset.zoom) === texteditCropZoom));
+          applyTexteditCropZoom();
+        };
+      });
+    }
+
+    function updateTexteditCropUI() {
+      const { x, y, w, h, dispW, dispH } = texteditCropState;
+      const sel = document.getElementById('texteditCropSelection');
+      sel.style.left = x + 'px';
+      sel.style.top = y + 'px';
+      sel.style.width = w + 'px';
+      sel.style.height = h + 'px';
+      document.getElementById('texteditCropShadeT').style.cssText = `top:0;left:0;right:0;height:${y}px`;
+      document.getElementById('texteditCropShadeB').style.cssText = `top:${y+h}px;left:0;right:0;bottom:0`;
+      document.getElementById('texteditCropShadeL').style.cssText = `top:${y}px;left:0;width:${x}px;height:${h}px`;
+      document.getElementById('texteditCropShadeR').style.cssText = `top:${y}px;left:${x+w}px;right:0;height:${h}px`;
+      const xPct = dispW ? (x / dispW) * 100 : 0;
+      const yPct = dispH ? (y / dispH) * 100 : 0;
+      const wPct = dispW ? (w / dispW) * 100 : 100;
+      const hPct = dispH ? (h / dispH) * 100 : 100;
+      document.getElementById('texteditCropXPct').value = xPct.toFixed(2);
+      document.getElementById('texteditCropYPct').value = yPct.toFixed(2);
+      document.getElementById('texteditCropWPct').value = wPct.toFixed(2);
+      document.getElementById('texteditCropHPct').value = hPct.toFixed(2);
+      if (typeof updateTexteditLivePreview === 'function') updateTexteditLivePreview();
+    }
+
+    function setupTexteditCropEvents() {
+      const inner = document.getElementById('texteditCropCanvasInner');
+      const sel = document.getElementById('texteditCropSelection');
+      const clamp = () => {
+        const { dispW, dispH } = texteditCropState;
+        texteditCropState.x = Math.max(0, Math.min(texteditCropState.x, dispW - 10));
+        texteditCropState.y = Math.max(0, Math.min(texteditCropState.y, dispH - 10));
+        texteditCropState.w = Math.max(10, Math.min(texteditCropState.w, dispW - texteditCropState.x));
+        texteditCropState.h = Math.max(10, Math.min(texteditCropState.h, dispH - texteditCropState.y));
+      };
+      inner.onmousedown = (e) => {
+        if (e.target.closest('.crop-handle')) return;
+        const rect = inner.getBoundingClientRect();
+        const mx = e.clientX - rect.left;
+        const my = e.clientY - rect.top;
+        if (e.target.closest('.crop-selection')) {
+          texteditCropDrag = { mode: 'move', startX: mx, startY: my, startCropX: texteditCropState.x, startCropY: texteditCropState.y };
+        } else {
+          texteditCropDrag = { mode: 'new', startX: mx, startY: my };
+        }
+      };
+      document.onmousemove = (e) => {
+        if (!texteditCropDrag) return;
+        const rect = inner.getBoundingClientRect();
+        const mx = e.clientX - rect.left;
+        const my = e.clientY - rect.top;
+        if (texteditCropDrag.mode === 'new') {
+          texteditCropState.x = Math.min(texteditCropDrag.startX, mx);
+          texteditCropState.y = Math.min(texteditCropDrag.startY, my);
+          texteditCropState.w = Math.abs(mx - texteditCropDrag.startX);
+          texteditCropState.h = Math.abs(my - texteditCropDrag.startY);
+          clamp();
+        } else if (texteditCropDrag.mode === 'move') {
+          texteditCropState.x = texteditCropDrag.startCropX + (mx - texteditCropDrag.startX);
+          texteditCropState.y = texteditCropDrag.startCropY + (my - texteditCropDrag.startY);
+          clamp();
+        } else if (texteditCropDrag.mode === 'resize') {
+          const h = texteditCropDrag.handle;
+          const { x: ox, y: oy, w: ow, h: oh } = texteditCropDrag.startState || texteditCropState;
+          if (h === 'se') {
+            texteditCropState.w = Math.max(10, mx - texteditCropState.x);
+            texteditCropState.h = Math.max(10, my - texteditCropState.y);
+          } else if (h === 'sw') {
+            texteditCropState.x = Math.min(mx, ox + ow - 10);
+            texteditCropState.w = ox + ow - texteditCropState.x;
+            texteditCropState.h = Math.max(10, my - texteditCropState.y);
+          } else if (h === 'ne') {
+            texteditCropState.y = Math.min(my, oy + oh - 10);
+            texteditCropState.w = Math.max(10, mx - texteditCropState.x);
+            texteditCropState.h = oy + oh - texteditCropState.y;
+          } else if (h === 'nw') {
+            texteditCropState.x = Math.min(mx, ox + ow - 10);
+            texteditCropState.y = Math.min(my, oy + oh - 10);
+            texteditCropState.w = ox + ow - texteditCropState.x;
+            texteditCropState.h = oy + oh - texteditCropState.y;
+          }
+          clamp();
+        }
+        updateTexteditCropUI();
+      };
+      document.onmouseup = () => { texteditCropDrag = null; };
+      sel.querySelectorAll('.crop-handle').forEach(handle => {
+        handle.onmousedown = (e) => {
+          e.stopPropagation();
+          texteditCropDrag = { mode: 'resize', handle: handle.dataset.handle, startState: { ...texteditCropState } };
+        };
+      });
+    }
 
     function initCropPreview() {
       const container = document.getElementById('cropPreviewContainer');
@@ -2045,6 +2849,25 @@
     // 送信
     form.addEventListener('submit', async (e) => {
       e.preventDefault();
+      const mode = modeInput.value;
+
+      // 拡大モード: 実行前に所要時間の案内
+      const isUpscale = mode === 'upscale' || (mode === 'pipeline' && pipelineSteps.some(s => s.mode === 'upscale'));
+      if (isUpscale && !confirm('拡大処理は完了まで数分かかることがあります。続行しますか？')) {
+        return;
+      }
+
+      // テキスト編集: 置換元・置換先の入力チェック
+      if (mode === 'textedit') {
+        const oldEl = document.querySelector('#optionsTextedit input[name="textedit_old"]');
+        const newEl = document.querySelector('#optionsTextedit input[name="textedit_new"]');
+        if (!oldEl?.value?.trim() || !newEl?.value?.trim()) {
+          message.className = 'message error';
+          message.textContent = '置換元・置換先のテキストを両方入力してください。';
+          return;
+        }
+      }
+
       message.className = 'message';
       message.textContent = '';
       saveArea.style.display = 'none';
@@ -2052,13 +2875,18 @@
       hideResultPreview();
       submitBtn.disabled = true;
       processingOverlay.classList.add('visible');
-
-      const mode = modeInput.value;
       let files = [...fileInput.files];
-      if (mode === 'pipeline') {
+      if (mode === 'pipeline' || mode === 'textedit') {
         files = files.filter(f => !isVideoFile(f));
       }
       const total = files.length;
+      if (mode === 'textedit' && !files.length) {
+        message.className = 'message error';
+        message.textContent = 'テキスト編集は画像のみ対応です。画像を選択してください。';
+        submitBtn.disabled = false;
+        processingOverlay.classList.remove('visible');
+        return;
+      }
       const progressContainer = document.getElementById('progressContainer');
       buildProgressItems(progressContainer, files);
       const countEl = progressContainer.querySelector('#progressCount');
