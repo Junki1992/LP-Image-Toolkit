@@ -47,12 +47,24 @@ def is_video(filename):
     return "." in filename and filename.rsplit(".", 1)[1].lower() in VIDEO_EXTENSIONS
 
 
-def process_one(input_path, output_path, mode, opts):
+def process_one(input_path, output_path, mode, opts, progress_callback=None):
     """1ファイルの画像または動画を処理。opts は form または dict（.get() を持つ）"""
     if mode == "upscale":
         scale = int(opts.get("scale", 4))
         upscale_mode = opts.get("upscale_mode", "photo")
-        upscale(str(input_path), str(output_path), mode=upscale_mode, scale=scale)
+        tw = opts.get("upscale_target_width")
+        th = opts.get("upscale_target_height")
+        target_width = int(tw) if tw else None
+        target_height = int(th) if th else None
+        upscale(
+            str(input_path),
+            str(output_path),
+            mode=upscale_mode,
+            scale=scale,
+            target_width=target_width,
+            target_height=target_height,
+            progress_callback=progress_callback,
+        )
         return None
     elif mode == "convert":
         quality = int(opts.get("quality", 95))
@@ -226,6 +238,78 @@ def process():
     ext = request.form.get("output_format", "png")
     if mode == "removebg":
         ext = "png"  # 背景削除は透過 PNG 固定
+
+    # アップスケールは進捗ストリーミング対応（ジョブベース）
+    if mode == "upscale":
+        job_id = uuid.uuid4().hex[:12]
+        progress_queue = Queue()
+        tmpdir = Path(tempfile.mkdtemp())
+
+        with jobs_lock:
+            jobs[job_id] = {
+                "queue": progress_queue,
+                "result_path": None,
+                "filename": None,
+                "count": 0,
+                "error": None,
+                "tmpdir": tmpdir,
+            }
+
+        def put_progress(step, msg, extra=None):
+            progress_queue.put({"step": step, "msg": msg, "extra": dict(extra or {}, **{"file_index": put_progress._file_index, "file_total": len(files)})})
+
+        put_progress._file_index = 0
+
+        upscale_opts = {
+            "scale": int(request.form.get("scale", 4)),
+            "upscale_mode": request.form.get("upscale_mode", "photo"),
+            "upscale_target_width": request.form.get("upscale_target_width"),
+            "upscale_target_height": request.form.get("upscale_target_height"),
+        }
+
+        for i, file in enumerate(files):
+            file.save(tmpdir / secure_filename(file.filename))
+
+        def run_upscale():
+            try:
+                used_names = set()
+                processed = []
+                for i, file in enumerate(files):
+                    put_progress._file_index = i
+                    stem = Path(secure_filename(file.filename)).stem
+                    input_path = tmpdir / secure_filename(file.filename)
+                    output_path = tmpdir / f"{stem}.{ext}"
+                    process_one(input_path, output_path, "upscale", upscale_opts, progress_callback=put_progress)
+                    processed.append((f"{stem}.{ext}", output_path))
+
+                if len(processed) == 1:
+                    out_name, out_path = processed[0]
+                    result_path = tmpdir / "_result"
+                    shutil.copy(out_path, result_path)
+                    filename = out_name
+                    count = 1
+                else:
+                    zip_path = tmpdir / "_result.zip"
+                    with zipfile.ZipFile(zip_path, "w", zipfile.ZIP_DEFLATED) as zf:
+                        for name, path in processed:
+                            zf.write(path, name)
+                    result_path = zip_path
+                    filename = f"images_{uuid.uuid4().hex[:8]}.zip"
+                    count = len(processed)
+
+                with jobs_lock:
+                    jobs[job_id]["result_path"] = result_path
+                    jobs[job_id]["filename"] = filename
+                    jobs[job_id]["count"] = count
+                progress_queue.put({"done": True})
+            except Exception as e:
+                with jobs_lock:
+                    jobs[job_id]["error"] = str(e)
+                progress_queue.put({"done": True, "error": str(e)})
+
+        thread = threading.Thread(target=run_upscale)
+        thread.start()
+        return jsonify({"job_id": job_id}), 202
 
     with tempfile.TemporaryDirectory() as tmpdir:
         tmpdir = Path(tmpdir)

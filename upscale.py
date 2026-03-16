@@ -10,6 +10,35 @@ from basicsr.archs.rrdbnet_arch import RRDBNet
 
 VIDEO_EXTENSIONS = {".mp4", ".mov", ".avi", ".mkv", ".webm"}
 
+
+def _enhance_with_progress(upsampler, img, scale, progress_callback):
+    """enhance を実行し、progress_callback があればタイル進捗を通知"""
+    if progress_callback and upsampler.tile_size > 0:
+        from tqdm import tqdm
+        import realesrgan.utils as ru
+
+        tile_pass = [0]  # 1=色情報, 2=透過情報（RGBA時のみ）
+
+        class ProgressTqdm(tqdm):
+            def update(self, n=1):
+                super().update(n)
+                if self.total and self.n <= self.total:
+                    if self.n == 1 and tile_pass[0] == 1:
+                        tile_pass[0] = 2
+                    elif self.n == self.total:
+                        tile_pass[0] = 1
+                    phase = "（透過部分）" if tile_pass[0] == 2 else ""
+                    progress_callback(3, f"区画 {self.n}/{self.total} をAIで拡大中{phase}（1区画あたり約5秒）", {"current": int(self.n), "total": int(self.total), "phase": tile_pass[0]})
+
+        orig_tqdm = ru.tqdm
+        ru.tqdm = ProgressTqdm
+        try:
+            return upsampler.enhance(img, outscale=scale)
+        finally:
+            ru.tqdm = orig_tqdm
+    return upsampler.enhance(img, outscale=scale)
+
+
 def _format_size(size_bytes):
     """バイト数を読みやすい形式に変換"""
     for unit in ("B", "KB", "MB"):
@@ -239,12 +268,37 @@ def convert(input_path, output_path, quality=95):
 
     print(f"      保存しました: {output_path}")
 
-def upscale(input_path, output_path, mode="photo", scale=4):
+def upscale(input_path, output_path, mode="photo", scale=4, target_width=None, target_height=None, progress_callback=None):
+    """画像をアップスケール。progress_callback(step, msg, extra) で進捗を通知"""
+    def report(step, msg, extra=None):
+        print(f"[{step}/4] {msg}")
+        if progress_callback:
+            progress_callback(step, msg, extra or {})
+
+    report(1, "画像ファイルを開いています...")
+    img = cv2.imread(input_path, cv2.IMREAD_UNCHANGED)
+    if img is None:
+        raise ValueError(f"画像を読み込めませんでした: {input_path}")
+    h, w = img.shape[:2]
+    print(f"      入力: {w}x{h}px")
+    if progress_callback:
+        progress_callback(1, f"読み込み完了: {w}×{h}px の画像", {"w": w, "h": h})
+
+    # 目標サイズが元より小さい場合はリサイズのみ（モデル不要）
+    if target_width is not None and target_height is not None:
+        tw, th = int(target_width), int(target_height)
+        if tw <= w and th <= h:
+            report(4, "拡大した画像をファイルに保存しています...")
+            output = cv2.resize(img, (tw, th), interpolation=cv2.INTER_AREA)
+            cv2.imwrite(output_path, output)
+            print(f"      保存しました: {output_path}")
+            return
+
     import torch
     use_gpu = torch.cuda.is_available()
     tile_size = 0 if use_gpu else 256  # GPU時はタイル不要で高速化
 
-    print("[1/4] モデルを読み込み中...")
+    report(2, "AIモデルを読み込んでいます（約64MB・初回は時間がかかります）...")
     if mode == "anime":
         model = RRDBNet(num_in_ch=3, num_out_ch=3, num_feat=64,
                         num_block=6, num_grow_ch=32, scale=4)
@@ -263,17 +317,25 @@ def upscale(input_path, output_path, mode="photo", scale=4):
         pre_pad=0,
         half=use_gpu       # GPU時はfp16で高速化
     )
+    if progress_callback:
+        progress_callback(2, "AIモデル読み込み完了", {})
     print("      モデル読み込み完了")
 
-    print("[2/4] 画像を読み込み中...")
-    img = cv2.imread(input_path, cv2.IMREAD_UNCHANGED)
-    h, w = img.shape[:2]
-    print(f"      入力: {w}x{h}px")
+    # 目標サイズから倍率を決定（縮小は上で return 済み）
+    if target_width is not None and target_height is not None:
+        tw, th = int(target_width), int(target_height)
+        # アップスケール: 2x で足りれば2x、それ以外は4x
+        report(3, "アップスケール処理中...")
+        scale = 2 if (2 * w >= tw and 2 * h >= th) else 4
+        output, _ = _enhance_with_progress(upsampler, img, scale, progress_callback)
+        out_h, out_w = output.shape[:2]
+        if out_w != tw or out_h != th:
+            output = cv2.resize(output, (tw, th), interpolation=cv2.INTER_LANCZOS4)
+    else:
+        report(3, "画像を拡大しています（区画ごとにAI処理・数分かかります）...")
+        output, _ = _enhance_with_progress(upsampler, img, scale, progress_callback)
 
-    print("[3/4] アップスケール処理中...")
-    output, _ = upsampler.enhance(img, outscale=scale)
-
-    print("[4/4] 保存中...")
+    report(4, "拡大した画像をファイルに保存しています...")
     cv2.imwrite(output_path, output)
     print(f"      保存しました: {output_path}")
 

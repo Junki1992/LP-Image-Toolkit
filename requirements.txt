@@ -2,6 +2,12 @@
 flask>=3.0.0
 werkzeug>=3.0.0
 
+# アップスケール（Real-ESRGAN）
+realesrgan
+basicsr
+facexlib
+gfpgan
+
 # 背景削除
 rembg>=2.0.0
 onnxruntime>=1.14.0

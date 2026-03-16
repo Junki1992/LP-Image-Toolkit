@@ -191,6 +191,19 @@
       font-size: 0.9rem;
     }
 
+    .upscale-original-size {
+      display: inline-block;
+      padding: 0.6rem 1.2rem;
+      margin-top: 0.35rem;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      font-size: 1rem;
+      font-weight: 600;
+      color: var(--text);
+      font-variant-numeric: tabular-nums;
+    }
+
     .file-preview {
       display: none;
       margin-top: 1rem;
@@ -481,6 +494,18 @@
       border-bottom: none;
     }
 
+    .progress-item.processing {
+      background: rgba(99, 102, 241, 0.08);
+      border-radius: 8px;
+      border: 1px solid rgba(99, 102, 241, 0.3);
+      margin: 0 -0.25rem;
+      padding: 0.75rem calc(0.75rem + 0.25rem);
+    }
+
+    .progress-item.done .progress-bar-fill {
+      background: linear-gradient(90deg, var(--success), #22c55e);
+    }
+
     .progress-thumb {
       width: 56px;
       height: 56px;
@@ -576,17 +601,62 @@
       font-size: 0.9rem;
     }
 
+    .progress-current-label {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      margin-top: 1rem;
+      margin-bottom: 0.35rem;
+    }
+
     .pipeline-progress-current {
       text-align: center;
-      font-size: 0.9rem;
+      font-size: 1rem;
+      font-weight: 500;
       color: var(--text);
-      margin-top: 0.75rem;
+      margin: 0;
+      padding: 0.75rem 1rem;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      line-height: 1.5;
     }
 
     .processing-text {
       color: var(--text-muted);
       font-size: 1rem;
       margin-top: 1rem;
+    }
+
+    .processing-status {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.75rem;
+      margin-top: 1rem;
+    }
+
+    .processing-spinner {
+      width: 24px;
+      height: 24px;
+      border: 3px solid var(--border);
+      border-top-color: var(--accent);
+      border-radius: 50%;
+      animation: processing-spin 0.8s linear infinite;
+    }
+
+    @keyframes processing-spin {
+      to { transform: rotate(360deg); }
+    }
+
+    .processing-status-text {
+      color: var(--text);
+      font-size: 1rem;
+    }
+
+    .processing-elapsed {
+      color: var(--text-muted);
+      font-size: 0.9rem;
+      margin-top: 0.5rem;
     }
 
     .btn-cancel {
@@ -710,9 +780,16 @@
       transition: all 0.2s;
     }
 
-    .btn-reset:hover:not(:disabled) {
-      border-color: var(--text-muted);
+    .btn-reset:not(:disabled) {
+      border-color: rgba(99, 102, 241, 0.4);
       color: var(--text);
+      background: rgba(99, 102, 241, 0.06);
+    }
+
+    .btn-reset:hover:not(:disabled) {
+      border-color: var(--accent);
+      background: rgba(99, 102, 241, 0.12);
+      color: var(--accent);
     }
 
     .btn-reset:disabled {
@@ -917,6 +994,34 @@
               <option value="jpg">JPEG</option>
             </select>
           </div>
+          <div class="form-group">
+            <label>元画像サイズ</label>
+            <div id="upscaleOriginalSize" class="upscale-original-size">画像を選択すると表示されます</div>
+          </div>
+          <div class="form-group">
+            <label>出力サイズ</label>
+            <div class="size-mode-toggle" style="margin-bottom: 0.5rem;">
+              <label class="toggle-option">
+                <input type="radio" name="upscale_size_mode" value="auto" checked>
+                <span>アスペクト比を維持（自動）</span>
+              </label>
+              <label class="toggle-option">
+                <input type="radio" name="upscale_size_mode" value="manual">
+                <span>手動で指定</span>
+              </label>
+            </div>
+            <div class="form-row" style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem;">
+              <div class="form-group">
+                <label>幅 (px)</label>
+                <input type="number" name="upscale_target_width" id="upscaleTargetWidth" placeholder="例: 2000" min="1">
+              </div>
+              <div class="form-group">
+                <label>高さ (px)</label>
+                <input type="number" name="upscale_target_height" id="upscaleTargetHeight" placeholder="例: 1200" min="1">
+              </div>
+            </div>
+            <p class="form-hint" style="margin-top: 0.25rem; font-size: 0.8rem;">アスペクト比維持時は片方入力で他方を自動計算。未入力時は倍率で処理。</p>
+          </div>
           <div class="advanced-toggle" data-target="advancedUpscale">
             <span class="arrow">▶</span>
             <span>詳細設定</span>
@@ -930,7 +1035,7 @@
               </select>
             </div>
             <div class="form-group">
-              <label>倍率</label>
+              <label>倍率（サイズ未指定時）</label>
               <select name="scale">
                 <option value="4">4倍</option>
                 <option value="2">2倍</option>
@@ -1054,8 +1159,15 @@
         <p class="progress-text"><span id="progressCount">0</span> / <span id="progressTotal">0</span> 件</p>
       </div>
       <div id="pipelineProgressSteps" class="pipeline-progress-steps" style="display: none;"></div>
-      <p id="pipelineProgressCurrent" class="pipeline-progress-current" style="display: none;"></p>
-      <p class="processing-text">処理中...</p>
+      <div id="pipelineProgressCurrentWrap" style="display: none;">
+        <div class="progress-current-label">現在の処理</div>
+        <p id="pipelineProgressCurrent" class="pipeline-progress-current"></p>
+      </div>
+      <div class="processing-status">
+        <div class="processing-spinner"></div>
+        <span id="processingStatusText" class="processing-status-text">処理中...</span>
+      </div>
+      <p id="processingElapsed" class="processing-elapsed"></p>
       <button type="button" class="btn-cancel" id="cancelBtn">キャンセル</button>
     </div>
 
@@ -1082,6 +1194,60 @@
     let currentPipelineEvtSource = null;
     let isCancelled = false;
     let resultPreviewUrl = null;
+    let processingElapsedInterval = null;
+
+    const MODE_LABELS = { upscale: 'アップスケール', convert: '形式変換', optimize: '軽量化', removebg: '背景削除', crop: 'トリミング' };
+    const MODE_DESCRIPTIONS = {
+      upscale: '画像をAIで拡大しています',
+      convert: '形式を変換しています',
+      optimize: '画像を圧縮・最適化しています',
+      removebg: '背景をAIで検出・削除しています（数分かかることがあります）',
+      crop: '指定範囲を切り抜いています'
+    };
+
+    function startProcessingFeedback(mode, fileIndex, total) {
+      const statusEl = document.getElementById('processingStatusText');
+      const elapsedEl = document.getElementById('processingElapsed');
+      const label = MODE_LABELS[mode] || mode;
+      if (mode === 'pipeline') {
+        statusEl.textContent = 'パイプライン処理中...';
+      } else if (total && total > 0) {
+        const n = (fileIndex ?? 0) + 1;
+        statusEl.textContent = `ファイル ${n}/${total} を${label}中...`;
+      } else {
+        statusEl.textContent = `${label}中...`;
+      }
+      if (mode === 'upscale' && (!total || total === 1)) {
+        statusEl.textContent += ' 数分かかることがあります';
+      }
+      elapsedEl.textContent = '';
+      const startTime = Date.now();
+      processingElapsedInterval = setInterval(() => {
+        const sec = Math.floor((Date.now() - startTime) / 1000);
+        const m = Math.floor(sec / 60);
+        const s = sec % 60;
+        elapsedEl.textContent = m > 0 ? `${m}分${s}秒経過` : `${s}秒経過`;
+      }, 1000);
+    }
+
+    function updateProcessingProgress(fileIndex, total, mode) {
+      const statusEl = document.getElementById('processingStatusText');
+      const desc = MODE_DESCRIPTIONS[mode] || MODE_LABELS[mode] || mode;
+      statusEl.textContent = total > 1 ? `ファイル ${fileIndex + 1}/${total}: ${desc}` : desc;
+      const progressContainer = document.getElementById('progressContainer');
+      progressContainer.querySelectorAll('.progress-item').forEach((item, idx) => {
+        item.classList.toggle('processing', idx === fileIndex);
+        item.classList.toggle('done', idx < fileIndex);
+      });
+    }
+
+    function stopProcessingFeedback() {
+      if (processingElapsedInterval) {
+        clearInterval(processingElapsedInterval);
+        processingElapsedInterval = null;
+      }
+      document.getElementById('processingElapsed').textContent = '';
+    }
 
     document.getElementById('cancelBtn').addEventListener('click', () => {
       if (currentPipelineEvtSource) {
@@ -1172,6 +1338,9 @@
         document.getElementById('optimizeVideoCheck').checked = false;
         document.getElementById('optimizeImageFormat').style.display = 'block';
         document.getElementById('optimizeVideoFormat').style.display = 'none';
+      } else if (mode === 'upscale') {
+        document.getElementById('upscaleTargetWidth').value = '';
+        document.getElementById('upscaleTargetHeight').value = '';
       }
       updateResetBtn();
     });
@@ -1225,6 +1394,7 @@
           document.onmouseup = null;
         }
         if (mode === 'optimize') maybeAutoCheckOptimizeVideo();
+        if (mode === 'upscale') updateUpscaleOriginalSize();
       });
     });
 
@@ -1304,8 +1474,12 @@
           opts.crop_h_pct = parseFloat(document.getElementById('pipelineCropHPct')?.value || 100);
           opts.quality = 95;
         } else if (s.mode === 'upscale') {
-          opts.scale = 4;
-          opts.upscale_mode = 'photo';
+          opts.scale = parseInt(document.querySelector('#optionsUpscale select[name="scale"]')?.value || 4);
+          opts.upscale_mode = document.querySelector('#optionsUpscale select[name="upscale_mode"]')?.value || 'photo';
+          const tw = document.getElementById('upscaleTargetWidth')?.value;
+          const th = document.getElementById('upscaleTargetHeight')?.value;
+          if (tw) opts.upscale_target_width = tw;
+          if (th) opts.upscale_target_height = th;
         } else if (s.mode === 'optimize') {
           opts.quality = 85;
         } else if (s.mode === 'convert') {
@@ -1432,6 +1606,61 @@
       });
     });
 
+    // アップスケール: 元画像サイズ表示・アスペクト比自動計算
+    let upscaleOrigSize = { w: 0, h: 0 };
+    let upscaleSyncing = false;
+
+    function updateUpscaleOriginalSize() {
+      if (modeInput.value !== 'upscale') return;
+      const files = [...fileInput.files].filter(f => !isVideoFile(f));
+      const el = document.getElementById('upscaleOriginalSize');
+      if (!files.length) {
+        el.textContent = '画像を選択すると表示されます';
+        upscaleOrigSize = { w: 0, h: 0 };
+        return;
+      }
+      const img = new Image();
+      img.onload = () => {
+        upscaleOrigSize = { w: img.naturalWidth, h: img.naturalHeight };
+        el.textContent = `${img.naturalWidth} × ${img.naturalHeight} px`;
+        URL.revokeObjectURL(img.src);
+      };
+      img.src = URL.createObjectURL(files[0]);
+    }
+
+    document.querySelectorAll('input[name="upscale_size_mode"]').forEach(radio => {
+      radio.addEventListener('change', () => {
+        if (radio.value === 'auto' && upscaleOrigSize.w && upscaleOrigSize.h) {
+          const wEl = document.getElementById('upscaleTargetWidth');
+          const hEl = document.getElementById('upscaleTargetHeight');
+          const w = parseInt(wEl.value) || upscaleOrigSize.w;
+          if (w) {
+            upscaleSyncing = true;
+            hEl.value = Math.round(upscaleOrigSize.h * (w / upscaleOrigSize.w));
+            upscaleSyncing = false;
+          }
+        }
+      });
+    });
+
+    function syncUpscaleSize(fromWidth) {
+      if (upscaleSyncing || document.querySelector('input[name="upscale_size_mode"]:checked')?.value !== 'auto') return;
+      if (!upscaleOrigSize.w || !upscaleOrigSize.h) return;
+      const wEl = document.getElementById('upscaleTargetWidth');
+      const hEl = document.getElementById('upscaleTargetHeight');
+      upscaleSyncing = true;
+      if (fromWidth) {
+        const w = parseInt(wEl.value);
+        if (w) hEl.value = Math.round(upscaleOrigSize.h * (w / upscaleOrigSize.w));
+      } else {
+        const h = parseInt(hEl.value);
+        if (h) wEl.value = Math.round(upscaleOrigSize.w * (h / upscaleOrigSize.h));
+      }
+      upscaleSyncing = false;
+    }
+    document.getElementById('upscaleTargetWidth').addEventListener('input', () => syncUpscaleSize(true));
+    document.getElementById('upscaleTargetHeight').addEventListener('input', () => syncUpscaleSize(false));
+
     // 軽量化: 動画チェックで出力形式を切り替え
     document.getElementById('optimizeVideoCheck').addEventListener('change', (e) => {
       const isVideo = e.target.checked;
@@ -1515,6 +1744,7 @@
         maybeAutoCheckOptimizeVideo();
         if (modeInput.value === 'crop') initCropPreview();
         if (modeInput.value === 'pipeline') initPipelineCropPreview();
+        if (modeInput.value === 'upscale') updateUpscaleOriginalSize();
       }
     });
     fileInput.addEventListener('change', updateFileName);
@@ -1587,6 +1817,7 @@
           updatePipelineCropVisibility();
           initPipelineCropPreview();
         }
+        if (modeInput.value === 'upscale') updateUpscaleOriginalSize();
       } else {
         fileName.textContent = '';
         submitBtn.disabled = true;
@@ -1594,6 +1825,7 @@
         document.getElementById('filePreview').classList.remove('visible');
         document.getElementById('cropPreviewContainer').style.display = 'none';
         document.getElementById('pipelineCropPreview').style.display = 'none';
+        if (modeInput.value === 'upscale') updateUpscaleOriginalSize();
       }
       updateResetBtn();
     }
@@ -1729,7 +1961,7 @@
       container.innerHTML = '';
       objectUrlsToRevoke.length = 0;
       document.getElementById('pipelineProgressSteps').style.display = 'none';
-      document.getElementById('pipelineProgressCurrent').style.display = 'none';
+      document.getElementById('pipelineProgressCurrentWrap').style.display = 'none';
       files.forEach((file, i) => {
         const item = document.createElement('div');
         item.className = 'progress-item';
@@ -1788,8 +2020,9 @@
 
     function updatePipelineProgressCurrent(fileIndex, fileTotal, stepName) {
       const el = document.getElementById('pipelineProgressCurrent');
+      const wrap = document.getElementById('pipelineProgressCurrentWrap');
       el.textContent = `ファイル ${fileIndex + 1}/${fileTotal} → ${stepName} を処理中`;
-      el.style.display = 'block';
+      if (wrap) wrap.style.display = 'block';
     }
 
     function buildFormData(mode, file, activeOpts) {
@@ -1834,6 +2067,7 @@
         if (!files.length) {
           message.className = 'message error';
           message.textContent = 'パイプラインは画像のみ対応です。画像を選択してください。';
+          stopProcessingFeedback();
           processingOverlay.classList.remove('visible');
           submitBtn.disabled = false;
           return;
@@ -1841,10 +2075,12 @@
         if (!pipelineSteps.length) {
           message.className = 'message error';
           message.textContent = 'ステップを追加してください。';
+          stopProcessingFeedback();
           processingOverlay.classList.remove('visible');
           submitBtn.disabled = false;
           return;
         }
+        startProcessingFeedback('pipeline');
         updatePipelineStepsInput();
         const stepNames = pipelineSteps.map(s => PIPELINE_MODES.find(m => m.value === s.mode)?.label || s.mode);
         buildPipelineProgressSteps(stepNames);
@@ -1940,13 +2176,133 @@
           if (isCancelled) message.className = 'message';
           message.textContent = msg;
         }
+        stopProcessingFeedback();
         processingOverlay.classList.remove('visible');
         document.getElementById('pipelineProgressSteps').style.display = 'none';
-        document.getElementById('pipelineProgressCurrent').style.display = 'none';
+        document.getElementById('pipelineProgressCurrentWrap').style.display = 'none';
         if (!pendingDownload) submitBtn.disabled = false;
         return;
       }
 
+      // アップスケール: 進捗ストリーミング
+      if (mode === 'upscale') {
+        const UPSCALE_STEPS = ['画像を開く', 'AIモデル読み込み', '画像を拡大', '保存'];
+        buildPipelineProgressSteps(UPSCALE_STEPS);
+        document.getElementById('pipelineProgressSteps').style.display = 'flex';
+        document.getElementById('pipelineProgressCurrentWrap').style.display = 'block';
+
+        const data = new FormData();
+        files.forEach(f => data.append('file', f));
+        data.append('mode', 'upscale');
+        const upscaleOpts = document.querySelector('#optionsUpscale');
+        ['output_format', 'scale', 'upscale_mode', 'upscale_target_width', 'upscale_target_height'].forEach(name => {
+          const el = upscaleOpts?.querySelector(`[name="${name}"]`);
+          if (el?.value) data.append(name, el.value);
+        });
+
+        try {
+          const controller = new AbortController();
+          currentAbortController = controller;
+          const timeoutId = setTimeout(() => controller.abort(), 600000);
+          const res = await fetch('/process', { method: 'POST', body: data, signal: controller.signal });
+          clearTimeout(timeoutId);
+          currentAbortController = null;
+          if (isCancelled) throw new Error('AbortError');
+          if (!res.ok) {
+            const err = await res.json();
+            throw new Error(err.error || 'エラーが発生しました');
+          }
+          const json = await res.json();
+          const jobId = json.job_id;
+          if (!jobId) throw new Error('ジョブIDが返されませんでした');
+
+          await new Promise((resolve, reject) => {
+            currentPipelineEvtSource = new EventSource(`/jobs/${jobId}/stream`);
+            currentPipelineEvtSource.onmessage = (e) => {
+              if (isCancelled) {
+                currentPipelineEvtSource?.close();
+                currentPipelineEvtSource = null;
+                reject(new Error('AbortError'));
+                return;
+              }
+              const ev = JSON.parse(e.data);
+              if (ev.type === 'ping') return;
+              if (ev.done) {
+                currentPipelineEvtSource?.close();
+                currentPipelineEvtSource = null;
+                progressContainer.querySelectorAll('.progress-bar-fill').forEach(b => { b.style.width = '100%'; });
+                const countEl = progressContainer.querySelector('#progressCount');
+                if (countEl) countEl.textContent = total;
+                if (ev.error) return reject(new Error(ev.error));
+                return resolve();
+              }
+              if (ev.step !== undefined) {
+                const fileIdx = ev.extra?.file_index ?? 0;
+                const fileTotal = ev.extra?.file_total ?? 1;
+                if (ev.step === 1 && fileIdx > 0) {
+                  UPSCALE_STEPS.forEach((_, idx) => updatePipelineStepStatus(idx, 'pending'));
+                }
+                for (let s = 0; s < ev.step - 1; s++) updatePipelineStepStatus(s, 'done');
+                if (ev.step <= 4) updatePipelineStepStatus(ev.step - 1, 'processing');
+                const statusEl = document.getElementById('processingStatusText');
+                const filePrefix = fileTotal > 1 ? `ファイル ${fileIdx + 1}/${fileTotal} → ` : '';
+                statusEl.textContent = filePrefix + (ev.msg || UPSCALE_STEPS[ev.step - 1]);
+                document.getElementById('pipelineProgressCurrent').textContent = ev.msg || '';
+                const item = progressContainer.querySelector(`.progress-item[data-index="${fileIdx}"]`);
+                const bar = item?.querySelector('.progress-bar-fill');
+                if (bar) {
+                  let pct = (ev.step - 1) * 25;
+                  if (ev.extra?.current !== undefined && ev.extra?.total) {
+                    pct += (ev.extra.current / ev.extra.total) * 25;
+                  } else {
+                    pct += 25;
+                  }
+                  bar.style.width = Math.min(pct, 100) + '%';
+                }
+                const countEl = progressContainer.querySelector('#progressCount');
+                if (countEl) countEl.textContent = fileIdx;
+              }
+            };
+            currentPipelineEvtSource.onerror = () => {
+              currentPipelineEvtSource?.close();
+              currentPipelineEvtSource = null;
+              reject(new Error('進捗ストリームの接続に失敗しました'));
+            };
+          });
+
+          const resResult = await fetch(`/jobs/${jobId}/result`);
+          if (!resResult.ok) {
+            const err = await resResult.json();
+            throw new Error(err.error || '結果の取得に失敗しました');
+          }
+          const blob = await resResult.blob();
+          const filename = resResult.headers.get('Content-Disposition')?.split('filename=')[1]?.replace(/"/g, '').trim() || `output.${files.length > 1 ? 'zip' : 'png'}`;
+          pendingDownload = { blob, filename };
+          saveFilenameInput.value = filename;
+          saveArea.style.display = 'block';
+          submitBtn.disabled = true;
+          showResultPreview(blob);
+          updateResetBtn();
+          message.className = 'message success';
+          message.textContent = `${total}件処理・処理が完了しました。保存ボタンをクリックしてください。`;
+        } catch (err) {
+          message.className = 'message error';
+          message.style.color = '';
+          let msg = err.message || '通信エラー';
+          if (msg === 'Failed to fetch') msg = 'サーバーに接続できません。';
+          else if (err.name === 'AbortError') msg = isCancelled ? 'キャンセルしました' : 'タイムアウトしました。';
+          if (isCancelled) message.className = 'message';
+          message.textContent = msg;
+        }
+        stopProcessingFeedback();
+        processingOverlay.classList.remove('visible');
+        document.getElementById('pipelineProgressSteps').style.display = 'none';
+        document.getElementById('pipelineProgressCurrentWrap').style.display = 'none';
+        if (!pendingDownload) submitBtn.disabled = false;
+        return;
+      }
+
+      startProcessingFeedback(mode, 0, total);
       const activeOpts = document.querySelector(`#options${mode.charAt(0).toUpperCase() + mode.slice(1)}`);
       const results = [];
       let totalInputSize = 0, totalOutputSize = 0;
@@ -1956,6 +2312,7 @@
         for (let i = 0; i < files.length; i++) {
           if (isCancelled) break;
 
+          updateProcessingProgress(i, total, mode);
           countEl.textContent = i;
           const item = progressContainer.querySelector(`.progress-item[data-index="${i}"]`);
           const bar = item?.querySelector('.progress-bar-fill');
@@ -1985,8 +2342,11 @@
 
           if (bar) bar.style.width = '100%';
           countEl.textContent = i + 1;
+          item?.classList.remove('processing');
+          item?.classList.add('done');
         }
 
+        progressContainer.querySelectorAll('.progress-item').forEach(it => it.classList.remove('processing'));
         let finalBlob, finalFilename;
         if (isCancelled || results.length === 0) {
           message.className = 'message';
@@ -2047,6 +2407,7 @@
       }
 
       objectUrlsToRevoke.forEach(url => URL.revokeObjectURL(url));
+      stopProcessingFeedback();
       processingOverlay.classList.remove('visible');
       if (!pendingDownload) submitBtn.disabled = false;
     });
