@@ -884,7 +884,7 @@
   <div class="container">
     <header>
       <h1>ImgCraft</h1>
-      <p class="subtitle">アップスケール・形式変換・軽量化・背景削除・トリミング・パイプライン（画像・動画）</p>
+      <p class="subtitle">拡大・形式変換・軽量化・背景削除・トリミング・パイプライン（画像・動画）</p>
     </header>
 
     <form id="form">
@@ -904,7 +904,7 @@
         <div class="mode-tabs">
           <button type="button" class="mode-tab" data-mode="convert">形式変換</button>
           <button type="button" class="mode-tab" data-mode="optimize">軽量化</button>
-          <button type="button" class="mode-tab" data-mode="upscale">アップスケール</button>
+          <button type="button" class="mode-tab" data-mode="upscale">拡大</button>
           <button type="button" class="mode-tab" data-mode="removebg">背景削除</button>
           <button type="button" class="mode-tab" data-mode="crop">トリミング</button>
           <button type="button" class="mode-tab" data-mode="pipeline">パイプライン</button>
@@ -1196,7 +1196,7 @@
     let resultPreviewUrl = null;
     let processingElapsedInterval = null;
 
-    const MODE_LABELS = { upscale: 'アップスケール', convert: '形式変換', optimize: '軽量化', removebg: '背景削除', crop: 'トリミング' };
+    const MODE_LABELS = { upscale: '拡大', convert: '形式変換', optimize: '軽量化', removebg: '背景削除', crop: 'トリミング' };
     const MODE_DESCRIPTIONS = {
       upscale: '画像をAIで拡大しています',
       convert: '形式を変換しています',
@@ -1402,7 +1402,7 @@
     const PIPELINE_MODES = [
       { value: 'removebg', label: '背景削除' },
       { value: 'crop', label: 'トリミング' },
-      { value: 'upscale', label: 'アップスケール' },
+      { value: 'upscale', label: '拡大' },
       { value: 'optimize', label: '軽量化' },
       { value: 'convert', label: '形式変換' }
     ];
@@ -2186,7 +2186,7 @@
 
       // アップスケール: 進捗ストリーミング
       if (mode === 'upscale') {
-        const UPSCALE_STEPS = ['画像を開く', 'AIモデル読み込み', '画像を拡大', '保存'];
+        const UPSCALE_STEPS = ['画像を開く', 'AIモデル読み込み', '拡大', '保存'];
         buildPipelineProgressSteps(UPSCALE_STEPS);
         document.getElementById('pipelineProgressSteps').style.display = 'flex';
         document.getElementById('pipelineProgressCurrentWrap').style.display = 'block';
