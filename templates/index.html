@@ -3,6 +3,9 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+  <meta http-equiv="Pragma" content="no-cache">
+  <meta http-equiv="Expires" content="0">
   <title>ImgCraft</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -540,6 +543,123 @@
     }
     .textedit-live-preview-canvas-wrap canvas {
       display: block;
+    }
+
+    /* CTA アニメーション プレビュー */
+    .cta-preview-wrap {
+      margin-top: 1rem;
+      padding-top: 1rem;
+      border-top: 1px solid var(--border);
+    }
+    .cta-preview-label {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      margin-bottom: 0.5rem;
+    }
+    .cta-preview-inner {
+      display: inline-block;
+      max-width: 100%;
+      background: var(--bg);
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      padding: 0.5rem;
+    }
+    .cta-preview-inner img {
+      display: block;
+      max-width: 280px;
+      max-height: 160px;
+      vertical-align: bottom;
+    }
+    .cta-preview-inner.cta-effect-pulse { animation: cta-preview-pulse 1.5s ease-in-out infinite; }
+    .cta-preview-inner.cta-effect-glow { animation: cta-preview-glow 1.5s ease-in-out infinite; }
+    .cta-preview-inner.cta-effect-bounce { animation: cta-preview-bounce 1s ease-in-out infinite; }
+    .cta-preview-inner.cta-effect-shake { animation: cta-preview-shake 0.5s ease-in-out infinite; }
+    .cta-preview-inner.cta-effect-float { animation: cta-preview-float 2s ease-in-out infinite; }
+    .cta-preview-inner.cta-effect-wiggle { animation: cta-preview-wiggle 0.4s ease-in-out infinite; }
+    .cta-preview-inner.cta-effect-fade { animation: cta-preview-fade 1.5s ease-in-out infinite; }
+    .cta-preview-inner.cta-effect-rotate { animation: cta-preview-rotate 2s ease-in-out infinite; }
+    .cta-preview-inner.cta-effect-swing { animation: cta-preview-swing 1s ease-in-out infinite; }
+    .cta-preview-inner.cta-effect-heartbeat { animation: cta-preview-heartbeat 1.2s ease-in-out infinite; }
+    .cta-preview-inner.cta-effect-rubber { animation: cta-preview-rubber 1s ease-in-out infinite; }
+    .cta-preview-inner.cta-effect-breathe { animation: cta-preview-breathe 3s ease-in-out infinite; }
+    .cta-preview-inner.cta-effect-attention { animation: cta-preview-attention 2s ease-out infinite; }
+    .cta-preview-inner.cta-effect-tilt { animation: cta-preview-tilt 2s ease-in-out infinite; }
+    .cta-preview-inner.cta-effect-shine { overflow: hidden; position: relative; }
+    .cta-preview-inner.cta-effect-shine::after {
+      content: ''; position: absolute; top: 0; left: -100%; width: 50%; height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent);
+      animation: cta-preview-shine 2s ease-in-out infinite;
+    }
+    .cta-preview-inner.cta-effect-ripple { cursor: pointer; overflow: hidden; position: relative; }
+    @keyframes cta-preview-pulse {
+      0%, 100% { transform: scale(1); filter: brightness(1); }
+      50% { transform: scale(1.05); filter: brightness(1.1); }
+    }
+    @keyframes cta-preview-glow {
+      0%, 100% { filter: brightness(1) drop-shadow(0 0 4px rgba(255,255,255,0.5)); }
+      50% { filter: brightness(1.1) drop-shadow(0 0 12px rgba(255,255,255,0.9)); }
+    }
+    @keyframes cta-preview-bounce {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-8px); }
+    }
+    @keyframes cta-preview-shake {
+      0%, 100% { transform: translateX(0); }
+      25% { transform: translateX(-4px); }
+      75% { transform: translateX(4px); }
+    }
+    @keyframes cta-preview-float {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-6px); }
+    }
+    @keyframes cta-preview-wiggle {
+      0%, 100% { transform: rotate(-2deg); }
+      50% { transform: rotate(2deg); }
+    }
+    @keyframes cta-preview-fade {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.75; }
+    }
+    @keyframes cta-preview-rotate {
+      0%, 100% { transform: rotate(-5deg); }
+      50% { transform: rotate(5deg); }
+    }
+    @keyframes cta-preview-swing {
+      0%, 100% { transform: rotate(-8deg); }
+      50% { transform: rotate(8deg); }
+    }
+    @keyframes cta-preview-heartbeat {
+      0%, 100% { transform: scale(1); }
+      14% { transform: scale(1.08); }
+      28% { transform: scale(1); }
+      42% { transform: scale(1.04); }
+      56% { transform: scale(1); }
+    }
+    @keyframes cta-preview-rubber {
+      0%, 100% { transform: scaleX(1) scaleY(1); }
+      30% { transform: scaleX(1.08) scaleY(0.96); }
+      65% { transform: scaleX(0.96) scaleY(1.04); }
+    }
+    @keyframes cta-preview-breathe {
+      0%, 100% { transform: scale(0.97); }
+      50% { transform: scale(1.03); }
+    }
+    @keyframes cta-preview-attention {
+      0%, 100% { transform: scale(1); }
+      10% { transform: scale(1.12); }
+      20% { transform: scale(1); }
+    }
+    @keyframes cta-preview-shine {
+      0% { left: -100%; }
+      50% { left: 150%; }
+      100% { left: 150%; }
+    }
+    @keyframes cta-preview-tilt {
+      0%, 100% { transform: perspective(400px) rotateX(-5deg) translateY(0); }
+      50% { transform: perspective(400px) rotateX(-5deg) translateY(-8px); }
+    }
+    @keyframes cta-preview-ripple {
+      to { transform: scale(4); opacity: 0; }
     }
 
     .crop-canvas-inner {
@@ -1282,6 +1402,7 @@
           <button type="button" class="mode-tab" data-mode="removebg">背景削除</button>
           <button type="button" class="mode-tab" data-mode="crop">トリミング</button>
           <button type="button" class="mode-tab" data-mode="textedit" style="display: none;">テキスト編集</button>
+          <button type="button" class="mode-tab" data-mode="cta">CTAアニメーション</button>
           <button type="button" class="mode-tab" data-mode="pipeline">パイプライン</button>
         </div>
 
@@ -1433,7 +1554,7 @@
 
         <div id="optionsRemovebg" class="options">
           <div class="output-mp4-badge">出力: PNG（透過）</div>
-          <p class="form-hint" style="margin-top: 0.5rem;">人物・商品などの背景を自動で削除します。初回実行時にモデルをダウンロードします（約176MB）。</p>
+          <p class="form-hint" style="margin-bottom: 0.5rem;">AIで背景を削除します。画像を選んで実行してください。（初回はモデルDLで数分かかります）</p>
         </div>
 
         <div id="optionsCrop" class="options">
@@ -1660,6 +1781,54 @@
           <p class="form-hint" style="margin-top: 0.5rem;">PaddleOCR を優先使用（日本語精度が高い）。編集範囲を指定した場合は PaddleOCR と EasyOCR の両方で検出し、長いテキストを優先して統合します。初回実行時にモデルをダウンロードします。</p>
         </div>
 
+        <div id="optionsCta" class="options">
+          <div class="form-group">
+            <label>アニメーション効果</label>
+            <select name="cta_effect" id="ctaEffectSelect">
+              <option value="pulse">パルス（拡大縮小＋明るさ変化）</option>
+              <option value="glow">グロー（光が広がる）</option>
+              <option value="bounce">バウンス（上下に弾む）</option>
+              <option value="shake">シェイク（左右に揺れる）</option>
+              <option value="float">フロート（ゆっくり上下に浮く）</option>
+              <option value="wiggle">ウィグル（小刻みに揺れる）</option>
+              <option value="fade">フェード（透明度が脈打つ）</option>
+              <option value="rotate">ローテート（軽く回転）</option>
+              <option value="swing">スイング（振り子のように揺れる）</option>
+              <option value="heartbeat">ハートビート（心拍のような動き）</option>
+              <option value="rubber">ラバー（ゴムのように伸び縮み）</option>
+              <option value="breathe">ブリーズ（ゆっくり膨らむ・縮む）</option>
+              <option value="attention">アテンション（一瞬大きく動く）</option>
+              <option value="shine">シャイン（光が走る・JS）</option>
+              <option value="ripple">リップル（クリックで波紋・JS）</option>
+              <option value="tilt">チルト（3Dで傾いて浮く）</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>出力形式</label>
+            <div class="options-form-row" style="flex-wrap: wrap; gap: 0.5rem;">
+              <label class="toggle-option" style="display: flex; align-items: center; gap: 0.35rem; cursor: pointer;">
+                <input type="radio" name="cta_output" value="gif" checked>
+                <span>GIF でダウンロード</span>
+              </label>
+              <label class="toggle-option" style="display: flex; align-items: center; gap: 0.35rem; cursor: pointer;">
+                <input type="radio" name="cta_output" value="code">
+                <span>ソースコード（HTML+CSS）</span>
+              </label>
+              <label class="toggle-option" style="display: flex; align-items: center; gap: 0.35rem; cursor: pointer;">
+                <input type="radio" name="cta_output" value="both">
+                <span>両方</span>
+              </label>
+            </div>
+            <p class="form-hint">CTA ボタンやバナー画像に動きを付けます。GIF はそのまま使え、コードは LP に組み込み可能です。シャイン・リップルは HTML+CSS+JS で生成されます。</p>
+          </div>
+          <div id="ctaPreviewWrap" class="cta-preview-wrap" style="display: none;">
+            <div class="cta-preview-label">プレビュー（選択した効果をリアルタイム表示・リップルはクリックで波紋）</div>
+            <div id="ctaPreviewInner" class="cta-preview-inner">
+              <img id="ctaPreviewImg" src="" alt="CTA プレビュー">
+            </div>
+          </div>
+        </div>
+
         <div id="optionsPipeline" class="options">
           <div class="form-group">
             <label>処理ステップ（上から順に実行）</label>
@@ -1795,14 +1964,16 @@
     let resultPreviewUrl = null;
     let processingElapsedInterval = null;
 
-    const MODE_LABELS = { upscale: '拡大', convert: '形式変換', optimize: '軽量化', removebg: '背景削除', crop: 'トリミング', textedit: 'テキスト編集' };
+    const MODE_LABELS = { upscale: '拡大', convert: '形式変換', optimize: '軽量化', removebg: '背景削除', crop: 'トリミング', textedit: 'テキスト編集', cta: 'CTAアニメーション', pipeline: 'パイプライン' };
     const MODE_DESCRIPTIONS = {
       upscale: '画像をAIで拡大しています',
       convert: '形式を変換しています',
       optimize: '画像を圧縮・最適化しています',
       removebg: '背景をAIで検出・削除しています（数分かかることがあります）',
       crop: '指定範囲を切り抜いています',
-      textedit: 'テキストを検出・置換しています'
+      textedit: 'テキストを検出・置換しています',
+      cta: 'アニメーションを生成しています',
+      pipeline: 'パイプライン処理中'
     };
 
     function startProcessingFeedback(mode, fileIndex, total) {
@@ -1953,6 +2124,11 @@
     function hideResultPreview() {
       const el = document.getElementById('resultPreview');
       el.classList.remove('visible');
+      const img = document.getElementById('resultPreviewImg');
+      if (img) {
+        img.src = '';
+        img.style.display = '';
+      }
       if (resultPreviewUrl) {
         URL.revokeObjectURL(resultPreviewUrl);
         resultPreviewUrl = null;
@@ -1962,10 +2138,20 @@
     function showResultPreview(blob) {
       hideResultPreview();
       if (!blob) return;
-      resultPreviewUrl = URL.createObjectURL(blob);
       const img = document.getElementById('resultPreviewImg');
-      img.src = resultPreviewUrl;
-      document.getElementById('resultPreview').classList.add('visible');
+      const previewWrap = document.getElementById('resultPreview');
+      // サーバーは application/octet-stream で返すため、image/ 以外でも画像として表示
+      const isImage = blob.type.startsWith('image/') || blob.type === 'application/octet-stream';
+      if (isImage) {
+        resultPreviewUrl = URL.createObjectURL(blob);
+        img.src = resultPreviewUrl;
+        img.style.display = '';
+      } else {
+        img.src = '';
+        img.style.display = 'none';
+        resultPreviewUrl = null;
+      }
+      previewWrap.classList.add('visible');
     }
 
     // プレビュー拡大
@@ -1996,7 +2182,7 @@
         document.querySelectorAll('.options').forEach(o => o.classList.remove('active'));
         document.getElementById(`options${mode.charAt(0).toUpperCase() + mode.slice(1)}`).classList.add('active');
 
-        document.getElementById('submitBtnText').textContent = mode === 'crop' ? '切り取り' : mode === 'pipeline' ? 'パイプライン実行' : '処理を実行';
+        document.getElementById('submitBtnText').textContent = mode === 'removebg' ? '背景透過' : mode === 'crop' ? '切り取り' : mode === 'pipeline' ? 'パイプライン実行' : '処理を実行';
         if (mode === 'textedit' && typeof updateTexteditLivePreview === 'function') updateTexteditLivePreview();
 
         if (mode === 'crop') {
@@ -2024,8 +2210,47 @@
         if (mode === 'optimize') maybeAutoCheckOptimizeVideo();
         if (mode === 'upscale') updateUpscaleOriginalSize();
         updateTexteditDetectButton();
+        if (mode === 'cta') updateCtaPreview();
       });
     });
+
+    // CTA アニメーション: プレビュー
+    function updateCtaPreview() {
+      const wrap = document.getElementById('ctaPreviewWrap');
+      const inner = document.getElementById('ctaPreviewInner');
+      const img = document.getElementById('ctaPreviewImg');
+      const effectSelect = document.getElementById('ctaEffectSelect');
+      if (!wrap || !inner || !img || !effectSelect) return;
+      const imageFiles = [...fileInput.files].filter(f => !isVideoFile(f));
+      if (!imageFiles.length || modeInput.value !== 'cta') {
+        wrap.style.display = 'none';
+        if (img._ctaUrl) {
+          URL.revokeObjectURL(img._ctaUrl);
+          img._ctaUrl = null;
+        }
+        img.src = '';
+        return;
+      }
+      if (img._ctaUrl) URL.revokeObjectURL(img._ctaUrl);
+      img._ctaUrl = URL.createObjectURL(imageFiles[0]);
+      img.src = img._ctaUrl;
+      const effect = effectSelect.value || 'pulse';
+      inner.className = 'cta-preview-inner cta-effect-' + effect;
+      wrap.style.display = 'block';
+    }
+    document.getElementById('ctaEffectSelect')?.addEventListener('change', updateCtaPreview);
+    document.getElementById('ctaPreviewInner')?.addEventListener('click', function(e) {
+      if (document.getElementById('ctaEffectSelect')?.value !== 'ripple') return;
+      const inner = this;
+      const rect = inner.getBoundingClientRect();
+      const x = e.clientX - rect.left;
+      const y = e.clientY - rect.top;
+      const ripple = document.createElement('span');
+      ripple.style.cssText = 'position:absolute;border-radius:50%;background:rgba(255,255,255,0.5);transform:scale(0);animation:cta-preview-ripple 0.6s ease-out forwards;pointer-events:none;width:100px;height:100px;left:'+(x-50)+'px;top:'+(y-50)+'px';
+      inner.appendChild(ripple);
+      setTimeout(() => ripple.remove(), 600);
+    });
+    fileInput.addEventListener('change', () => { if (modeInput.value === 'cta') updateCtaPreview(); });
 
     // テキスト編集: 検出ボタン・検出結果表示
     function updateTexteditDetectButton() {
@@ -2209,6 +2434,8 @@
           opts.quality = 85;
         } else if (s.mode === 'convert') {
           opts.quality = 95;
+        } else if (s.mode === 'removebg') {
+          // AI背景削除のみ（オプションなし）
         }
         return opts;
       });
@@ -2557,6 +2784,7 @@
         }
         if (modeInput.value === 'upscale') updateUpscaleOriginalSize();
         updateTexteditDetectButton();
+        if (modeInput.value === 'cta') updateCtaPreview();
       } else {
         fileName.textContent = '';
         submitBtn.disabled = true;
@@ -2567,6 +2795,7 @@
         document.getElementById('pipelineCropPreview').style.display = 'none';
         if (modeInput.value === 'upscale') updateUpscaleOriginalSize();
         updateTexteditDetectButton();
+        if (modeInput.value === 'cta') updateCtaPreview();
       }
       updateResetBtn();
     }
@@ -3254,7 +3483,7 @@
       submitBtn.disabled = true;
       processingOverlay.classList.add('visible');
       let files = [...fileInput.files];
-      if (mode === 'pipeline' || mode === 'textedit') {
+      if (mode === 'pipeline' || mode === 'textedit' || mode === 'cta') {
         files = files.filter(f => !isVideoFile(f));
       }
       const total = files.length;
@@ -3504,6 +3733,54 @@
         processingOverlay.classList.remove('visible');
         document.getElementById('pipelineProgressSteps').style.display = 'none';
         document.getElementById('pipelineProgressCurrentWrap').style.display = 'none';
+        if (!pendingDownload) submitBtn.disabled = false;
+        return;
+      }
+
+      // CTA アニメーション（全ファイル一括送信）
+      if (mode === 'cta') {
+        if (!files.length) {
+          message.className = 'message error';
+          message.textContent = 'CTAアニメーションは画像のみ対応です。画像を選択してください。';
+          stopProcessingFeedback();
+          processingOverlay.classList.remove('visible');
+          submitBtn.disabled = false;
+          return;
+        }
+        startProcessingFeedback('cta', 0, total);
+        const data = new FormData();
+        files.forEach(f => data.append('file', f));
+        data.append('mode', 'cta');
+        data.append('cta_effect', document.querySelector('#optionsCta select[name="cta_effect"]')?.value || 'pulse');
+        data.append('cta_output', document.querySelector('#optionsCta input[name="cta_output"]:checked')?.value || 'gif');
+        try {
+          const controller = new AbortController();
+          currentAbortController = controller;
+          const timeoutId = setTimeout(() => controller.abort(), 120000);
+          const res = await fetch('/process', { method: 'POST', body: data, signal: controller.signal });
+          clearTimeout(timeoutId);
+          currentAbortController = null;
+          if (isCancelled) throw new Error('AbortError');
+          if (!res.ok) {
+            const err = await res.json();
+            throw new Error(err.error || 'エラーが発生しました');
+          }
+          const blob = await res.blob();
+          const filename = res.headers.get('Content-Disposition')?.split('filename=')[1]?.replace(/"/g, '').trim() || 'cta_output.gif';
+          pendingDownload = { blob, filename };
+          saveFilenameInput.value = filename;
+          saveArea.style.display = 'block';
+          submitBtn.disabled = true;
+          showResultPreview(blob);
+          updateResetBtn();
+          message.className = 'message success';
+          message.textContent = '処理が完了しました。保存ボタンをクリックしてください。';
+        } catch (err) {
+          message.className = 'message error';
+          message.textContent = err.message || 'エラーが発生しました';
+        }
+        stopProcessingFeedback();
+        processingOverlay.classList.remove('visible');
         if (!pendingDownload) submitBtn.disabled = false;
         return;
       }

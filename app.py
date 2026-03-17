@@ -18,6 +18,7 @@ from werkzeug.utils import secure_filename
 
 from upscale import convert, crop, optimize, optimize_video, remove_background, upscale
 from textedit import detect_text, replace_text
+from cta_animation import generate_gif, generate_code, EFFECTS
 
 STEP_LABELS = {
     "removebg": "背景削除",
@@ -26,6 +27,7 @@ STEP_LABELS = {
     "optimize": "軽量化",
     "convert": "形式変換",
     "textedit": "テキスト編集",
+    "cta": "CTAアニメーション",
 }
 
 # パイプラインジョブ用（job_id -> {queue, result_path, filename, error, tmpdir}）
@@ -382,10 +384,10 @@ def process():
         thread.start()
         return jsonify({"job_id": job_id}), 202
 
-    if mode in ("convert", "upscale", "removebg", "crop", "textedit"):
+    if mode in ("convert", "upscale", "removebg", "crop", "textedit", "cta"):
         files = [f for f in files if not is_video(f.filename)]
         if not files:
-            return jsonify({"error": "形式変換・拡大・背景削除・トリミング・テキスト編集は画像のみ対応です。動画は軽量化モードでどうぞ。"}), 400
+            return jsonify({"error": "形式変換・拡大・背景削除・トリミング・テキスト編集・CTAアニメーションは画像のみ対応です。動画は軽量化モードでどうぞ。"}), 400
     ext = request.form.get("output_format", "png")
     if mode == "removebg":
         ext = "png"  # 背景削除は透過 PNG 固定
@@ -461,6 +463,61 @@ def process():
         thread = threading.Thread(target=run_upscale)
         thread.start()
         return jsonify({"job_id": job_id}), 202
+
+    # CTA アニメーション
+    if mode == "cta":
+        cta_effect = request.form.get("cta_effect", "pulse")
+        cta_output = request.form.get("cta_output", "gif")  # gif | code | both
+        if cta_effect not in EFFECTS:
+            return jsonify({"error": f"無効なエフェクト: {cta_effect}"}), 400
+        if cta_output not in ("gif", "code", "both"):
+            return jsonify({"error": f"無効な出力形式: {cta_output}"}), 400
+
+        with tempfile.TemporaryDirectory() as cta_tmpdir:
+            cta_tmpdir = Path(cta_tmpdir)
+            for i, file in enumerate(files):
+                file.save(cta_tmpdir / secure_filename(file.filename))
+
+            outputs = []
+            for i, file in enumerate(files):
+                stem = Path(secure_filename(file.filename)).stem
+                orig_name = secure_filename(file.filename)
+                input_path = cta_tmpdir / orig_name
+                img_ref = f"{stem}_cta.gif" if cta_output == "both" else f"{stem}_cta.png"
+                if cta_output in ("gif", "both"):
+                    gif_path = cta_tmpdir / f"{stem}_cta.gif"
+                    generate_gif(str(input_path), cta_effect, str(gif_path))
+                    outputs.append(("gif", f"{stem}_cta.gif", gif_path))
+                if cta_output in ("code", "both"):
+                    code_str = generate_code(str(input_path), cta_effect, img_ref)
+                    html_path = cta_tmpdir / f"{stem}_cta.html"
+                    html_path.write_text(code_str, encoding="utf-8")
+                    outputs.append(("code", f"{stem}_cta.html", html_path))
+                    if cta_output == "code":
+                        img_copy = cta_tmpdir / img_ref
+                        shutil.copy(input_path, img_copy)
+                        outputs.append(("img", img_ref, img_copy))
+
+            if cta_output == "both" or len(outputs) > 1:
+                zip_buffer = BytesIO()
+                with zipfile.ZipFile(zip_buffer, "w", zipfile.ZIP_DEFLATED) as zf:
+                    for _, name, path in outputs:
+                        zf.write(path, name)
+                data = BytesIO(zip_buffer.getvalue())
+                download_name = f"cta_{uuid.uuid4().hex[:8]}.zip"
+                mimetype = "application/zip"
+            else:
+                _, name, path = outputs[0]
+                data = BytesIO(path.read_bytes())
+                download_name = name
+                mimetype = "image/gif" if cta_output == "gif" else "text/html"
+
+            return send_file(
+                data,
+                as_attachment=True,
+                download_name=download_name,
+                mimetype=mimetype,
+            )
 
     with tempfile.TemporaryDirectory() as tmpdir:
         tmpdir = Path(tmpdir)

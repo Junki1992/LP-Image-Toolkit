@@ -244,6 +244,98 @@ def remove_background(input_path, output_path):
     print(f"      保存しました: {output_path}")
 
 
+def remove_background_bright(input_path, output_path, min_rgb=240):
+    """明るい色（白〜薄いグレー）を透過。スクリーンショット・オフホワイト背景向け。
+    R,G,B がすべて min_rgb 以上のピクセルを透明にする。緑ボタンなどは R が低いので残る。
+    """
+    from PIL import Image
+    import numpy as np
+
+    input_path = Path(input_path) if not isinstance(input_path, Path) else input_path
+    input_size = input_path.stat().st_size if input_path.exists() else 0
+    print(f"[1/3] 画像を読み込み中... {input_path.name} ({input_size} bytes)")
+
+    img = Image.open(input_path).convert("RGBA")
+    arr = np.array(img)
+    h, w = arr.shape[:2]
+    print(f"      入力: {w}x{h}px")
+
+    print("[2/3] 明るい色を透過中...")
+    rgb = arr[:, :, :3]
+    bright = (rgb[:, :, 0] >= min_rgb) & (rgb[:, :, 1] >= min_rgb) & (rgb[:, :, 2] >= min_rgb)
+    arr[:, :, 3] = np.where(bright, 0, 255).astype(np.uint8)
+
+    kept = int(np.sum(arr[:, :, 3] == 255))
+    removed = int(np.sum(arr[:, :, 3] == 0))
+    total = h * w
+    print(f"      残す: {kept}px, 透過: {removed}px (合計{total}px)")
+
+    if kept == 0:
+        # 全部透過 = 閾値が緩すぎた可能性。min_rgb を 250 に上げて厳格に（白に近いものだけ透過）
+        print("      警告: 残るピクセルが0。min_rgb を 250 に上げて再試行（白に近いもののみ透過）...")
+        min_rgb = 250
+        bright = (rgb[:, :, 0] >= min_rgb) & (rgb[:, :, 1] >= min_rgb) & (rgb[:, :, 2] >= min_rgb)
+        arr[:, :, 3] = np.where(bright, 0, 255).astype(np.uint8)
+        kept = int(np.sum(arr[:, :, 3] == 255))
+        print(f"      再試行後 残す: {kept}px")
+
+    print("[3/3] 保存中...")
+    Image.fromarray(arr).save(output_path, "PNG")
+    print(f"      保存しました: {output_path}")
+
+
+def remove_background_by_color(input_path, output_path, threshold=25, sample_margin=0.02, bg_color_hex=None):
+    """単色背景を削除（四隅をサンプリング or 指定色で類似色を透明に）
+    バナーや白背景の画像向け。AI で全部消える場合の代替手段。
+    threshold: 色の類似度（0-100、大きいほど多くのピクセルが透明になる）
+    sample_margin: 四隅のサンプル範囲（画像サイズに対する割合、0.02=2%）
+    bg_color_hex: 背景色を指定（例: #FFFFFF, FFFFFF）。None なら四隅から自動検出
+    """
+    from PIL import Image
+    import numpy as np
+    import re
+
+    print("[1/3] 画像を読み込み中...")
+    img = Image.open(input_path).convert("RGBA")
+    arr = np.array(img)
+    h, w = arr.shape[:2]
+    print(f"      入力: {w}x{h}px")
+
+    if bg_color_hex:
+        # 指定色をパース（#FFFFFF, FFFFFF, rgb(255,255,255) など）
+        hex_val = bg_color_hex.strip().lstrip("#")
+        m = re.match(r"^([0-9a-fA-F]{2})([0-9a-fA-F]{2})([0-9a-fA-F]{2})$", hex_val)
+        if m:
+            r, g, b = int(m.group(1), 16), int(m.group(2), 16), int(m.group(3), 16)
+            bg_color = np.array([r, g, b, 255], dtype=np.float32)
+            print(f"      背景色指定: #{hex_val}")
+        else:
+            raise ValueError(f"背景色の形式が不正です: {bg_color_hex} （例: #FFFFFF または FFFFFF）")
+    else:
+        # 四隅をサンプリング（マージン内のピクセル平均）
+        m = max(1, int(min(w, h) * sample_margin))
+        corners = [
+            arr[:m, :m].reshape(-1, 4).mean(axis=0),   # 左上
+            arr[:m, -m:].reshape(-1, 4).mean(axis=0),  # 右上
+            arr[-m:, :m].reshape(-1, 4).mean(axis=0),  # 左下
+            arr[-m:, -m:].reshape(-1, 4).mean(axis=0), # 右下
+        ]
+        bg_color = np.array(corners).mean(axis=0).astype(np.float32)
+    # RGB のみで距離計算（Alpha は無視）
+    threshold_val = threshold * (255 / 100) * np.sqrt(3)  # 正規化
+
+    print("[2/3] 単色背景を削除中...")
+    rgb = arr[:, :, :3].astype(np.float32)
+    bg_rgb = bg_color[:3]
+    dist = np.sqrt(np.sum((rgb - bg_rgb) ** 2, axis=2))
+    mask = dist > threshold_val
+    arr[:, :, 3] = np.where(mask, 255, 0).astype(np.uint8)
+
+    print("[3/3] 保存中...")
+    Image.fromarray(arr).save(output_path, "PNG")
+    print(f"      保存しました: {output_path}")
+
+
 def convert(input_path, output_path, quality=95):
     """画像の形式を変換する（例: jpg→png, png→jpg）"""
     print("[1/2] 画像を読み込み中...")
