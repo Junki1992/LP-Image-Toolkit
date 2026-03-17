@@ -16,3 +16,6 @@ onnxruntime>=1.14.0
 paddlepaddle>=2.5.0
 paddleocr>=2.7.0
 easyocr>=1.7.0
+
+# テキスト編集・背景馴染み（LaMa inpainting、オプション）
+simple-lama-inpainting>=0.1.0

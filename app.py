@@ -117,6 +117,14 @@ def process_one(input_path, output_path, mode, opts, progress_callback=None):
                     font_size_override = fs
             except (ValueError, TypeError):
                 pass
+        font_index_override = None
+        if opts.get("textedit_font") is not None and opts.get("textedit_font") != "":
+            try:
+                fi = int(opts.get("textedit_font"))
+                if fi >= 0:
+                    font_index_override = fi
+            except (ValueError, TypeError):
+                pass
         text_color_override = None
         hex_color = opts.get("textedit_text_color", "").strip()
         if hex_color:
@@ -159,9 +167,39 @@ def process_one(input_path, output_path, mode, opts, progress_callback=None):
                     outline_width_override = ow
             except (ValueError, TypeError):
                 pass
+        gradient_enabled = opts.get("textedit_gradient") == "1"
+        gradient_color_start = None
+        gradient_color_mid = None
+        gradient_color_end = None
+        if gradient_enabled:
+            for key, color_override in (
+                ("textedit_gradient_start", "start"),
+                ("textedit_gradient_mid", "mid"),
+                ("textedit_gradient_end", "end"),
+            ):
+                hex_val = opts.get(key, "").strip()
+                if hex_val:
+                    hc = hex_val.lstrip("#")
+                    if len(hc) >= 6 and all(c in "0123456789aAbBcCdDeEfF" for c in hc[:6]):
+                        try:
+                            rgb = (int(hc[0:2], 16), int(hc[2:4], 16), int(hc[4:6], 16))
+                            if color_override == "start":
+                                gradient_color_start = rgb
+                            elif color_override == "mid":
+                                gradient_color_mid = rgb
+                            else:
+                                gradient_color_end = rgb
+                        except (ValueError, TypeError):
+                            pass
+        gradient_direction = opts.get("textedit_gradient_direction", "v")
+        if gradient_direction not in ("v", "h"):
+            gradient_direction = "v"
+        use_inpainting = opts.get("textedit_inpainting") == "1"
         replace_text(str(input_path), str(output_path), old_text, new_text, crop=crop, progress_callback=progress_callback,
-                    font_size_override=font_size_override, text_color_override=text_color_override, bg_color_override=bg_color_override, position_offset=position_offset,
-                    outline_color_override=outline_color_override, outline_width_override=outline_width_override)
+                    font_size_override=font_size_override, font_index_override=font_index_override, text_color_override=text_color_override, bg_color_override=bg_color_override, position_offset=position_offset,
+                    outline_color_override=outline_color_override, outline_width_override=outline_width_override,
+                    gradient_enabled=gradient_enabled, gradient_color_start=gradient_color_start, gradient_color_mid=gradient_color_mid, gradient_color_end=gradient_color_end, gradient_direction=gradient_direction,
+                    use_inpainting=use_inpainting)
         return None
     return None
 

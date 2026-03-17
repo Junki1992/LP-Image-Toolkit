@@ -33,6 +33,13 @@ FONT_PATHS = [
     "/usr/share/fonts/truetype/noto/NotoSansCJK-Regular.ttc",
 ]
 
+FONT_LABELS = [
+    "ヒラギノ角ゴ W6", "ヒラギノ角ゴ W4", "ヒラギノ丸ゴ W6", "ヒラギノ丸ゴ W4",
+    "Arial Bold", "Arial Black", "Impact",
+    "Arial Bold (alt)", "DejaVu Sans Bold", "Liberation Sans Bold",
+    "Noto Sans CJK Bold", "Noto Sans CJK Bold (alt)", "Noto Sans CJK",
+]
+
 
 def _preprocess_for_ocr(img, min_side_target=800):
     """
@@ -463,6 +470,51 @@ def _bg_color_in_region(img_bgr, pts):
     return (int(bg[0]), int(bg[1]), int(bg[2]))
 
 
+def _bg_corners_for_fill(img_bgr, x1, y1, x2, y2, pad=8):
+    """
+    塗りつぶし範囲の四隅の外側から背景色をサンプリング。
+    Returns: (tl, tr, br, bl) 各 BGR tuple。双線形グラデーション用。
+    """
+    h, w = img_bgr.shape[:2]
+    pad = max(1, min(pad, (x2 - x1) // 3, (y2 - y1) // 3))
+
+    def sample_region(ya, yb, xa, xb):
+        y0, y1 = max(0, ya), min(h, yb)
+        x0, x1 = max(0, xa), min(w, xb)
+        if y1 <= y0 or x1 <= x0:
+            return None
+        roi = img_bgr[y0:y1, x0:x1]
+        if roi.size == 0:
+            return None
+        return tuple(np.median(roi.reshape(-1, 3), axis=0).astype(np.uint8).tolist())
+
+    tl = sample_region(y1 - pad, y1, x1 - pad, x1)
+    tr = sample_region(y1 - pad, y1, x2, x2 + pad)
+    br = sample_region(y2, y2 + pad, x2, x2 + pad)
+    bl = sample_region(y2, y2 + pad, x1 - pad, x1)
+    fallback = np.median(img_bgr[y1:y2, x1:x2].reshape(-1, 3), axis=0).astype(np.uint8)
+    fallback = tuple(fallback.tolist())
+    tl = tl if tl else fallback
+    tr = tr if tr else fallback
+    br = br if br else fallback
+    bl = bl if bl else fallback
+    return tl, tr, br, bl
+
+
+def _create_bilinear_bg(w, h, tl_bgr, tr_bgr, br_bgr, bl_bgr):
+    """四隅の色から双線形補間で背景画像を生成。BGR"""
+    tl = np.array(tl_bgr, dtype=np.float32).reshape(1, 1, 3)
+    tr = np.array(tr_bgr, dtype=np.float32).reshape(1, 1, 3)
+    br = np.array(br_bgr, dtype=np.float32).reshape(1, 1, 3)
+    bl = np.array(bl_bgr, dtype=np.float32).reshape(1, 1, 3)
+    ty = np.linspace(0, 1, h).reshape(-1, 1, 1)
+    tx = np.linspace(0, 1, w).reshape(1, -1, 1)
+    top = (1 - tx) * tl + tx * tr
+    bot = (1 - tx) * bl + tx * br
+    out = (1 - ty) * top + ty * bot
+    return np.clip(out.squeeze(), 0, 255).astype(np.uint8)
+
+
 def _outline_color(rgb):
     """
     アウトライン用の色。
@@ -495,9 +547,52 @@ def _outline_width(font_size, text_color_rgb):
     return w
 
 
+def _create_gradient_rgb(w, h, color_stops, direction):
+    """
+    グラデーション画像を生成（RGB、numpy array）
+    color_stops: [(pos, (r,g,b)), ...] で pos は 0〜1。例: [(0,暗),(0.5,明),(1,暗)]
+    direction: "v" = 縦（上→下）, "h" = 横（左→右）
+    """
+    if len(color_stops) < 2:
+        return np.zeros((h, w, 3), dtype=np.uint8)
+    stops = sorted(color_stops, key=lambda x: x[0])
+    if direction == "h":
+        t = np.linspace(0, 1, w).reshape(1, -1)
+        t = np.broadcast_to(t, (h, w))
+    else:
+        t = np.linspace(0, 1, h).reshape(-1, 1)
+        t = np.broadcast_to(t, (h, w))
+    p_first, c_first = stops[0]
+    p_last, c_last = stops[-1]
+    r = np.full_like(t, c_first[0], dtype=np.float64)
+    g = np.full_like(t, c_first[1], dtype=np.float64)
+    b = np.full_like(t, c_first[2], dtype=np.float64)
+    for i in range(len(stops) - 1):
+        p0, c0 = stops[i]
+        p1, c1 = stops[i + 1]
+        mask = (t >= p0) & (t <= p1)
+        if not np.any(mask):
+            continue
+        span = max(1e-9, p1 - p0)
+        local_t = np.clip((t - p0) / span, 0, 1)
+        r[mask] = (1 - local_t[mask]) * c0[0] + local_t[mask] * c1[0]
+        g[mask] = (1 - local_t[mask]) * c0[1] + local_t[mask] * c1[1]
+        b[mask] = (1 - local_t[mask]) * c0[2] + local_t[mask] * c1[2]
+    mask_after = t > p_last
+    if np.any(mask_after):
+        r[mask_after] = c_last[0]
+        g[mask_after] = c_last[1]
+        b[mask_after] = c_last[2]
+    return np.stack([np.clip(r, 0, 255).astype(np.uint8),
+                     np.clip(g, 0, 255).astype(np.uint8),
+                     np.clip(b, 0, 255).astype(np.uint8)], axis=-1)
+
+
 def replace_text(input_path, output_path, old_text, new_text, crop=None, progress_callback=None, use_dual_ocr=False,
-                 font_size_override=None, text_color_override=None, bg_color_override=None, position_offset=None,
-                 outline_color_override=None, outline_width_override=None):
+                 font_size_override=None, font_index_override=None, text_color_override=None, bg_color_override=None, position_offset=None,
+                 outline_color_override=None, outline_width_override=None,
+                 gradient_enabled=False, gradient_color_start=None, gradient_color_mid=None, gradient_color_end=None, gradient_direction="v",
+                 use_inpainting=False):
     """
     画像内のテキストを置換する
 
@@ -510,11 +605,18 @@ def replace_text(input_path, output_path, old_text, new_text, crop=None, progres
         progress_callback: (step, message) のコールバック（任意）
         use_dual_ocr: True のとき PaddleOCR と EasyOCR の両方で検出し、bbox を統合（範囲選択時の置換精度向上）
         font_size_override: フォントサイズ（px）。None で自動
+        font_index_override: FONT_PATHS のインデックス（0〜）。None で自動
         text_color_override: (r, g, b) の tuple。None で自動
         bg_color_override: (b, g, r) の tuple（OpenCV BGR）。None で自動
         position_offset: (dx, dy) の tuple。描画位置のオフセット（px）。None で中央
         outline_color_override: (r, g, b) の tuple。None で自動（白文字＋黒縁など手動指定可能）
         outline_width_override: 縁の太さ（px）。None で自動
+        gradient_enabled: True で文字色をグラデーションに
+        gradient_color_start: (r, g, b) 開始色（上）
+        gradient_color_mid: (r, g, b) 中間色（中央のハイライト）。None で2色グラデ
+        gradient_color_end: (r, g, b) 終了色（下）
+        gradient_direction: "v" = 縦（上→下）, "h" = 横（左→右）
+        use_inpainting: True で LaMa により背景を補完して馴染ませる（要 simple-lama-inpainting）
 
     Raises:
         ValueError: old_text が見つからない場合
@@ -543,8 +645,10 @@ def replace_text(input_path, output_path, old_text, new_text, crop=None, progres
         try:
             cv2.imwrite(tmp_in, cropped)
             replace_text(tmp_in, tmp_out, old_text, new_text, crop=None, progress_callback=progress_callback, use_dual_ocr=True,
-                        font_size_override=font_size_override, text_color_override=text_color_override, bg_color_override=bg_color_override, position_offset=position_offset,
-                        outline_color_override=outline_color_override, outline_width_override=outline_width_override)
+                        font_size_override=font_size_override, font_index_override=font_index_override, text_color_override=text_color_override, bg_color_override=bg_color_override, position_offset=position_offset,
+                        outline_color_override=outline_color_override, outline_width_override=outline_width_override,
+                        gradient_enabled=gradient_enabled, gradient_color_start=gradient_color_start, gradient_color_mid=gradient_color_mid, gradient_color_end=gradient_color_end, gradient_direction=gradient_direction,
+                        use_inpainting=use_inpainting)
             result_region = cv2.imread(tmp_out)
             if result_region is not None:
                 rh, rw = result_region.shape[:2]
@@ -658,6 +762,7 @@ def replace_text(input_path, output_path, old_text, new_text, crop=None, progres
 
     h_img, w_img = img.shape[:2]
     for bbox, detected_text, _ in matches:
+        img_orig = img.copy()
         pts = np.array(bbox, dtype=np.int32)
         x_min, y_min = pts.min(axis=0)
         x_max, y_max = pts.max(axis=0)
@@ -683,8 +788,15 @@ def replace_text(input_path, output_path, old_text, new_text, crop=None, progres
         else:
             font_size = max(12, int(box_h * 0.70))
         fit_ratio = 0.70
+
+        # ユーザー指定フォントを優先しつつ、存在しない場合は他フォントをフォールバック
+        if font_index_override is not None and 0 <= font_index_override < len(FONT_PATHS):
+            preferred = FONT_PATHS[font_index_override]
+            font_paths_to_try = [preferred] + [p for i, p in enumerate(FONT_PATHS) if i != font_index_override]
+        else:
+            font_paths_to_try = FONT_PATHS
         if font_size_override is not None and font_size_override > 0:
-            for fp in FONT_PATHS:
+            for fp in font_paths_to_try:
                 if Path(fp).exists():
                     try:
                         use_font = ImageFont.truetype(fp, int(font_size_override))
@@ -693,7 +805,7 @@ def replace_text(input_path, output_path, old_text, new_text, crop=None, progres
                     except Exception:
                         pass
         if use_font == default_font:
-            for fp in FONT_PATHS:
+            for fp in font_paths_to_try:
                 if not Path(fp).exists():
                     continue
                 for fs in range(min(font_size, int(box_h * fit_ratio)), 8, -1):
@@ -713,7 +825,7 @@ def replace_text(input_path, output_path, old_text, new_text, crop=None, progres
 
         if use_font == default_font:
             font_size = max(12, int(box_h * 0.65))
-            for fp in FONT_PATHS:
+            for fp in font_paths_to_try:
                 if Path(fp).exists():
                     try:
                         use_font = ImageFont.truetype(fp, font_size)
@@ -761,15 +873,40 @@ def replace_text(input_path, output_path, old_text, new_text, crop=None, progres
             pts_exp = np.array([[x1, y1], [x2, y1], [x2, y2], [x1, y2]], dtype=np.int32)
             y_max = y_max_fill
 
-        bg_bgr = _bg_color_in_region(img, pts)
-        if bg_color_override and len(bg_color_override) >= 3:
-            bg_bgr = (int(bg_color_override[2]), int(bg_color_override[1]), int(bg_color_override[0]))
-        else:
-            lum = 0.299 * bg_bgr[2] + 0.587 * bg_bgr[1] + 0.114 * bg_bgr[0]
-            if lum < 80:
-                bg_bgr = tuple(min(255, int(c * 1.5 + 128)) for c in bg_bgr)
+        x1, y1 = pts_exp[:, 0].min(), pts_exp[:, 1].min()
+        x2, y2 = pts_exp[:, 0].max(), pts_exp[:, 1].max()
+        fw, fh = x2 - x1, y2 - y1
         img_filled = img.copy()
-        cv2.fillPoly(img_filled, [pts_exp], bg_bgr)
+        if use_inpainting:
+            try:
+                from lama_inpaint import create_simple_lama
+                mask_inpaint = np.zeros((h_img, w_img), dtype=np.uint8)
+                cv2.fillPoly(mask_inpaint, [pts_exp], 255)
+                img_rgb = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+                simple_lama = getattr(replace_text, "_lama", None)
+                if simple_lama is None:
+                    simple_lama = create_simple_lama()
+                    replace_text._lama = simple_lama
+                from PIL import Image as PILImage
+                pil_in = PILImage.fromarray(img_rgb)
+                pil_mask = PILImage.fromarray(mask_inpaint).convert("L")
+                result = simple_lama(pil_in, pil_mask)
+                img_filled = cv2.cvtColor(np.array(result), cv2.COLOR_RGB2BGR)
+            except Exception as e:
+                logger.warning("LaMa inpainting に失敗、従来方式にフォールバック: %s", e)
+                use_inpainting = False
+        if not use_inpainting:
+            if bg_color_override and len(bg_color_override) >= 3:
+                bg_bgr = (int(bg_color_override[2]), int(bg_color_override[1]), int(bg_color_override[0]))
+                cv2.fillPoly(img_filled, [pts_exp], bg_bgr)
+            else:
+                tl, tr, br, bl = _bg_corners_for_fill(img, x1, y1, x2, y2)
+                bg_grad = _create_bilinear_bg(fw, fh, tl, tr, br, bl)
+                mask_fill = np.zeros((h_img, w_img), dtype=np.uint8)
+                cv2.fillPoly(mask_fill, [pts_exp], 255)
+                roi = img_filled[y1:y2, x1:x2]
+                roi_mask = mask_fill[y1:y2, x1:x2] > 0
+                roi[roi_mask] = bg_grad[roi_mask]
         img_rgb = cv2.cvtColor(img_filled, cv2.COLOR_BGR2RGB)
         pil_img = Image.fromarray(img_rgb)
         draw = ImageDraw.Draw(pil_img)
@@ -795,21 +932,90 @@ def replace_text(input_path, output_path, old_text, new_text, crop=None, progres
 
         # 縁取り: PIL の stroke_width/stroke_fill で高品質描画（Pillow 8.0+）
         stroke_fill = outline_color
-        try:
-            draw.text(
-                (tx, ty), new_text, font=use_font, fill=text_color,
-                stroke_width=outline_w, stroke_fill=stroke_fill,
+        use_gradient = (
+            gradient_enabled
+            and gradient_color_start is not None
+            and gradient_color_end is not None
+            and len(gradient_color_start) >= 3
+            and len(gradient_color_end) >= 3
+        )
+        if use_gradient:
+            # 1. 縁のみ描画（fill は後でグラデーションで上書きするので仮の色）
+            try:
+                draw.text(
+                    (tx, ty), new_text, font=use_font, fill=outline_color,
+                    stroke_width=outline_w, stroke_fill=stroke_fill,
+                )
+            except TypeError:
+                if outline_w > 0:
+                    for dx in range(-outline_w, outline_w + 1):
+                        for dy in range(-outline_w, outline_w + 1):
+                            if dx != 0 or dy != 0:
+                                draw.text((tx + dx, ty + dy), new_text, font=use_font, fill=stroke_fill)
+                draw.text((tx, ty), new_text, font=use_font, fill=outline_color)
+            # 2. テキスト形状のマスクを作成
+            pad = 4
+            mask_w = tw + pad * 2
+            mask_h = th + pad * 2
+            mask_img = Image.new("L", (mask_w, mask_h), 0)
+            mask_draw = ImageDraw.Draw(mask_img)
+            mask_draw.text((pad - bbox_draw[0], pad - bbox_draw[1]), new_text, font=use_font, fill=255)
+            mask_arr = np.array(mask_img)
+            # 3. グラデーション画像を生成（2色 or 3色）
+            if gradient_color_mid is not None and len(gradient_color_mid) >= 3:
+                color_stops = [
+                    (0.0, gradient_color_start[:3]),
+                    (0.5, gradient_color_mid[:3]),
+                    (1.0, gradient_color_end[:3]),
+                ]
+            else:
+                color_stops = [
+                    (0.0, gradient_color_start[:3]),
+                    (1.0, gradient_color_end[:3]),
+                ]
+            grad_arr = _create_gradient_rgb(
+                mask_w, mask_h,
+                color_stops,
+                gradient_direction if gradient_direction in ("v", "h") else "v",
             )
-        except TypeError:
-            # 古い Pillow は stroke 非対応 → 従来の複数描画でフォールバック
-            if outline_w > 0:
-                for dx in range(-outline_w, outline_w + 1):
-                    for dy in range(-outline_w, outline_w + 1):
-                        if dx != 0 or dy != 0:
-                            draw.text((tx + dx, ty + dy), new_text, font=use_font, fill=stroke_fill)
-            draw.text((tx, ty), new_text, font=use_font, fill=text_color)
+            # 4. マスクで合成: マスク>0 の箇所にグラデーションを貼り付け（numpy で一括）
+            px = tx + bbox_draw[0] - pad
+            py = ty + bbox_draw[1] - pad
+            img_arr = np.array(pil_img)
+            y1 = max(0, py)
+            y2 = min(img_arr.shape[0], py + mask_h)
+            x1 = max(0, px)
+            x2 = min(img_arr.shape[1], px + mask_w)
+            sy1, sy2 = y1 - py, y2 - py
+            sx1, sx2 = x1 - px, x2 - px
+            mask_roi = mask_arr[sy1:sy2, sx1:sx2] > 0
+            if mask_roi.any():
+                img_arr[y1:y2, x1:x2][mask_roi] = grad_arr[sy1:sy2, sx1:sx2][mask_roi]
+            pil_img = Image.fromarray(img_arr)
+        else:
+            try:
+                draw.text(
+                    (tx, ty), new_text, font=use_font, fill=text_color,
+                    stroke_width=outline_w, stroke_fill=stroke_fill,
+                )
+            except TypeError:
+                if outline_w > 0:
+                    for dx in range(-outline_w, outline_w + 1):
+                        for dy in range(-outline_w, outline_w + 1):
+                            if dx != 0 or dy != 0:
+                                draw.text((tx + dx, ty + dy), new_text, font=use_font, fill=stroke_fill)
+                draw.text((tx, ty), new_text, font=use_font, fill=text_color)
 
         img = cv2.cvtColor(np.array(pil_img), cv2.COLOR_RGB2BGR)
+
+        # エッジのフェザー: 境界をぼかして自然に馴染ませる（inpainting 時はスキップ）
+        if not use_inpainting:
+            mask_feather = np.zeros((h_img, w_img), dtype=np.float32)
+            cv2.fillPoly(mask_feather, [pts_exp], 1.0)
+            k = max(3, min(11, min(fw, fh) // 8) | 1)  # 奇数
+            mask_feather = cv2.GaussianBlur(mask_feather, (k, k), k * 0.3)
+            mask_3 = np.stack([mask_feather] * 3, axis=-1)
+            img = (img.astype(np.float32) * mask_3 + img_orig.astype(np.float32) * (1 - mask_3)).clip(0, 255).astype(np.uint8)
 
     ext = Path(output_path).suffix.lower()
     if ext in (".jpg", ".jpeg"):

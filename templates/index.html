@@ -34,12 +34,14 @@
       color: var(--text);
       min-height: 100vh;
       line-height: 1.6;
+      overflow-x: hidden;
     }
 
     .container {
       max-width: 560px;
       margin: 0 auto;
       padding: 2rem 1.5rem;
+      min-width: 0;
     }
 
     header {
@@ -69,6 +71,8 @@
       border-radius: 16px;
       padding: 1.5rem;
       margin-bottom: 1.5rem;
+      overflow-x: hidden;
+      min-width: 0;
     }
 
     .card h2 {
@@ -122,18 +126,19 @@
       flex-wrap: wrap;
       gap: 0.5rem;
       margin-bottom: 1rem;
+      min-width: 0;
     }
 
     .mode-tab {
-      flex: 1;
-      padding: 0.75rem 1rem;
+      flex: 1 1 100px;
+      min-width: 0;
+      padding: 0.65rem 0.75rem;
       border: 1px solid var(--border);
-      border-radius: 10px;
+      border-radius: 8px;
       background: transparent;
       color: var(--text-muted);
       font-family: inherit;
-      font-size: 0.9rem;
-      white-space: nowrap;
+      font-size: 0.8rem;
       font-weight: 500;
       cursor: pointer;
       transition: all 0.2s;
@@ -152,6 +157,7 @@
 
     .options {
       display: none;
+      min-width: 0;
     }
 
     .options.active {
@@ -160,6 +166,7 @@
 
     .form-group {
       margin-bottom: 1rem;
+      min-width: 0;
     }
 
     .form-group:last-child {
@@ -367,6 +374,7 @@
       color: var(--text-muted);
     }
     .btn-zoom {
+      width: auto;
       padding: 0.25rem 0.5rem;
       font-size: 0.8rem;
       min-width: 2.5rem;
@@ -376,25 +384,141 @@
       color: white;
       border-color: var(--accent);
     }
+    .btn-pos-center {
+      width: auto;
+      padding: 0.15rem 0.3rem;
+      font-size: 0.7rem;
+      min-width: 1.5rem;
+      height: 1.5rem;
+      line-height: 1;
+    }
+    .btn-pick-color {
+      width: 1.5rem !important;
+      min-width: 1.5rem;
+      height: 1.5rem;
+      padding: 0;
+      font-size: 0.75rem;
+      line-height: 1;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .btn-pick-color.picking {
+      background: var(--accent);
+      color: white;
+      border-color: var(--accent);
+    }
     .textedit-advanced-row {
       display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+      min-width: 0;
+    }
+    .textedit-advanced-row-colors {
+      display: flex;
       flex-wrap: wrap;
-      gap: 1rem;
+      gap: 0.75rem 1rem;
       align-items: flex-end;
+    }
+    .textedit-advanced-row-colors .textedit-advanced-item {
+      flex: 0 0 auto;
+    }
+    .textedit-advanced-item-pos .textedit-advanced-controls-row {
+      flex-wrap: nowrap;
     }
     .textedit-advanced-item {
       display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 0.2rem;
+      min-width: 0;
+    }
+    .textedit-advanced-item .textedit-advanced-label {
+      order: -1;
+    }
+    .textedit-advanced-controls-row {
+      display: flex;
       align-items: center;
-      gap: 0.35rem;
+      gap: 0.25rem;
+      flex-wrap: wrap;
+      min-width: 0;
+    }
+    .textedit-advanced-row-colors .textedit-advanced-controls-row {
+      flex-wrap: nowrap;
     }
     .textedit-advanced-label {
-      font-size: 0.8rem;
+      font-size: 0.75rem;
       color: var(--text-muted);
       white-space: nowrap;
     }
     .textedit-unit {
-      font-size: 0.8rem;
+      font-size: 0.75rem;
       color: var(--text-muted);
+    }
+    .textedit-gradient-wrap {
+      flex-direction: column;
+    }
+    .textedit-gradient-wrap .textedit-advanced-label {
+      display: flex;
+      align-items: center;
+      gap: 0.35rem;
+    }
+    .textedit-gradient-controls {
+      width: fit-content;
+      max-width: 100%;
+    }
+    .textedit-gradient-controls .textedit-advanced-controls-row {
+      flex-wrap: wrap;
+      gap: 0.2rem;
+    }
+    .textedit-gradient-controls select {
+      width: auto;
+      min-width: 6rem;
+    }
+    .textedit-gradient-controls .textedit-input-color {
+      width: 1.5rem !important;
+      min-width: 1.5rem !important;
+      max-width: 1.5rem !important;
+      box-sizing: border-box;
+    }
+    .textedit-gradient-controls .textedit-input-hex {
+      width: 3.2rem !important;
+      min-width: 3.2rem !important;
+      max-width: 3.2rem !important;
+    }
+    .textedit-gradient-arrow {
+      font-size: 0.9rem;
+      color: var(--text-muted);
+      flex-shrink: 0;
+    }
+    .textedit-input-font {
+      min-width: 8rem;
+      padding: 0.2rem 0.35rem;
+      font-size: 0.8rem;
+    }
+    .textedit-input-num {
+      width: 3.2rem;
+      max-width: 100%;
+      padding: 0.2rem 0.35rem;
+      font-size: 0.8rem;
+    }
+    .textedit-input-num-sm {
+      width: 2.5rem;
+    }
+    .textedit-input-color {
+      width: 1.5rem;
+      height: 1.4rem;
+      padding: 1px;
+      cursor: pointer;
+      flex-shrink: 0;
+    }
+    .textedit-input-hex {
+      width: 3.5rem !important;
+      min-width: 3.5rem;
+      max-width: 3.5rem;
+      padding: 0.2rem 0.35rem;
+      font-size: 0.8rem;
+      font-family: monospace;
     }
     .textedit-live-preview {
       margin-top: 1rem;
@@ -474,8 +598,10 @@
     .crop-handle[data-handle="se"] { bottom: -6px; right: -6px; cursor: nwse-resize; }
 
     .form-group select,
-    .form-group input[type="number"] {
+    .form-group input[type="number"],
+    .form-group input[type="text"] {
       width: 100%;
+      max-width: 100%;
       padding: 0.65rem 0.9rem;
       border: 1px solid var(--border);
       border-radius: 8px;
@@ -483,12 +609,34 @@
       color: var(--text);
       font-family: inherit;
       font-size: 0.9rem;
+      box-sizing: border-box;
     }
 
     .form-row {
       display: grid;
       grid-template-columns: 1fr 1fr;
       gap: 1rem;
+    }
+    .options-form-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 1rem 1.5rem;
+      align-items: flex-start;
+      margin-bottom: 1rem;
+      min-width: 0;
+    }
+    .options-form-row .form-group {
+      margin-bottom: 0;
+      flex: 1 1 140px;
+      min-width: 0;
+      max-width: 100%;
+    }
+    .options-form-row .form-group select,
+    .options-form-row .form-group input[type="number"],
+    .options-form-row .form-group input[type="text"] {
+      width: 100%;
+      max-width: 100%;
+      min-width: 0;
     }
 
     .size-mode-toggle {
@@ -1133,47 +1281,53 @@
           <button type="button" class="mode-tab" data-mode="upscale">拡大</button>
           <button type="button" class="mode-tab" data-mode="removebg">背景削除</button>
           <button type="button" class="mode-tab" data-mode="crop">トリミング</button>
-          <button type="button" class="mode-tab" data-mode="textedit">テキスト編集</button>
+          <button type="button" class="mode-tab" data-mode="textedit" style="display: none;">テキスト編集</button>
           <button type="button" class="mode-tab" data-mode="pipeline">パイプライン</button>
         </div>
 
         <input type="hidden" name="mode" id="modeInput" value="convert">
 
         <div id="optionsConvert" class="options active">
-          <div class="form-group">
-            <label>出力形式</label>
-            <select name="output_format" data-mode="convert">
-              <option value="png">PNG</option>
-              <option value="jpg">JPEG</option>
-              <option value="webp">WebP</option>
-            </select>
+          <div class="options-form-row">
+            <div class="form-group">
+              <label>出力形式</label>
+              <select name="output_format" data-mode="convert">
+                <option value="png">PNG</option>
+                <option value="jpg">JPEG</option>
+                <option value="webp">WebP</option>
+              </select>
+            </div>
           </div>
           <div class="advanced-toggle" data-target="advancedConvert">
             <span class="arrow">▶</span>
             <span>詳細設定</span>
           </div>
           <div id="advancedConvert" class="advanced-opts">
-            <div class="form-group">
-              <label>品質 (JPEG/WebP)</label>
-              <input type="number" name="quality" data-mode="convert" min="1" max="100" value="95">
+            <div class="options-form-row">
+              <div class="form-group">
+                <label>品質 (JPEG/WebP)</label>
+                <input type="number" name="quality" data-mode="convert" min="1" max="100" value="95">
+              </div>
             </div>
           </div>
         </div>
 
         <div id="optionsOptimize" class="options">
-          <div class="form-group">
-            <label class="toggle-option" style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer; padding: 0.5rem 0;">
-              <input type="checkbox" name="optimize_video" id="optimizeVideoCheck">
-              <span>動画（MP4）を軽量化する</span>
-            </label>
-          </div>
-          <div id="optimizeImageFormat" class="form-group">
-            <label>出力形式</label>
-            <select name="output_format" data-mode="optimize">
-              <option value="jpg">JPEG（推奨）</option>
-              <option value="png">PNG</option>
-              <option value="webp">WebP</option>
-            </select>
+          <div class="options-form-row">
+            <div class="form-group">
+              <label class="toggle-option" style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer; padding: 0;">
+                <input type="checkbox" name="optimize_video" id="optimizeVideoCheck">
+                <span>動画（MP4）を軽量化する</span>
+              </label>
+            </div>
+            <div id="optimizeImageFormat" class="form-group">
+              <label>出力形式</label>
+              <select name="output_format" data-mode="optimize">
+                <option value="jpg">JPEG（推奨）</option>
+                <option value="png">PNG</option>
+                <option value="webp">WebP</option>
+              </select>
+            </div>
           </div>
           <div id="optimizeVideoFormat" class="form-group" style="display: none;">
             <div class="output-mp4-badge">出力: MP4</div>
@@ -1183,20 +1337,26 @@
             <span>詳細設定</span>
           </div>
           <div id="advancedOptimize" class="advanced-opts">
-            <div class="form-group">
-              <label>サイズ指定</label>
-              <div class="size-mode-toggle">
-                <label class="toggle-option">
-                  <input type="radio" name="optimize_size_mode" value="auto" checked>
-                  <span>自動（長辺1920px以下）</span>
-                </label>
-                <label class="toggle-option">
-                  <input type="radio" name="optimize_size_mode" value="manual">
-                  <span>手動で指定</span>
-                </label>
+            <div class="options-form-row">
+              <div class="form-group">
+                <label>サイズ指定</label>
+                <div class="size-mode-toggle">
+                  <label class="toggle-option">
+                    <input type="radio" name="optimize_size_mode" value="auto" checked>
+                    <span>自動（長辺1920px以下）</span>
+                  </label>
+                  <label class="toggle-option">
+                    <input type="radio" name="optimize_size_mode" value="manual">
+                    <span>手動で指定</span>
+                  </label>
+                </div>
+              </div>
+              <div class="form-group">
+                <label>品質 (JPEG/WebP)</label>
+                <input type="number" name="quality" data-mode="optimize" min="1" max="100" value="85">
               </div>
             </div>
-            <div id="manualSizeOpts" class="form-row" style="display: none;">
+            <div id="manualSizeOpts" class="options-form-row" style="display: none;">
               <div class="form-group">
                 <label>最大幅 (px)</label>
                 <input type="number" name="max_width" placeholder="例: 1200" min="1">
@@ -1206,24 +1366,22 @@
                 <input type="number" name="max_height" placeholder="例: 800" min="1">
               </div>
             </div>
-            <div class="form-group">
-              <label>品質 (JPEG/WebP)</label>
-              <input type="number" name="quality" data-mode="optimize" min="1" max="100" value="85">
-            </div>
           </div>
         </div>
 
         <div id="optionsUpscale" class="options">
-          <div class="form-group">
-            <label>出力形式</label>
-            <select name="output_format" data-mode="upscale">
-              <option value="png">PNG</option>
-              <option value="jpg">JPEG</option>
-            </select>
-          </div>
-          <div class="form-group">
-            <label>元画像サイズ</label>
-            <div id="upscaleOriginalSize" class="upscale-original-size">画像を選択すると表示されます</div>
+          <div class="options-form-row">
+            <div class="form-group">
+              <label>出力形式</label>
+              <select name="output_format" data-mode="upscale">
+                <option value="png">PNG</option>
+                <option value="jpg">JPEG</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>元画像サイズ</label>
+              <div id="upscaleOriginalSize" class="upscale-original-size">画像を選択すると表示されます</div>
+            </div>
           </div>
           <div class="form-group">
             <label>出力サイズ</label>
@@ -1254,19 +1412,21 @@
             <span>詳細設定</span>
           </div>
           <div id="advancedUpscale" class="advanced-opts">
-            <div class="form-group">
-              <label>モード</label>
-              <select name="upscale_mode">
-                <option value="photo">写真</option>
-                <option value="anime">アニメ</option>
-              </select>
-            </div>
-            <div class="form-group">
-              <label>倍率（サイズ未指定時）</label>
-              <select name="scale">
-                <option value="4">4倍</option>
-                <option value="2">2倍</option>
-              </select>
+            <div class="options-form-row">
+              <div class="form-group">
+                <label>モード</label>
+                <select name="upscale_mode">
+                  <option value="photo">写真</option>
+                  <option value="anime">アニメ</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label>倍率（サイズ未指定時）</label>
+                <select name="scale">
+                  <option value="4">4倍</option>
+                  <option value="2">2倍</option>
+                </select>
+              </div>
             </div>
           </div>
         </div>
@@ -1277,13 +1437,15 @@
         </div>
 
         <div id="optionsCrop" class="options">
-          <div class="form-group">
-            <label>出力形式</label>
-            <select name="output_format" data-mode="crop">
-              <option value="png">PNG</option>
-              <option value="jpg">JPEG</option>
-              <option value="webp">WebP</option>
-            </select>
+          <div class="options-form-row">
+            <div class="form-group">
+              <label>出力形式</label>
+              <select name="output_format" data-mode="crop">
+                <option value="png">PNG</option>
+                <option value="jpg">JPEG</option>
+                <option value="webp">WebP</option>
+              </select>
+            </div>
           </div>
           <div id="cropPreviewContainer" class="crop-preview-container" style="display: none;">
             <div class="crop-preview-label">切り抜き範囲を指定（ドラッグで選択・四隅でリサイズ）</div>
@@ -1355,51 +1517,122 @@
             <div id="texteditDetectedList" class="textedit-detected-list"></div>
             <p class="form-hint">画像を選択して「テキストを検出」をクリック。編集範囲を指定すると精度が上がります。検出されたテキストをクリックで置換元にコピー、✎で編集できます。<strong>編集範囲指定＋OCR 未検出時は置換元を手入力→置換したいテキストだけを囲むように狭く選択してください（広いと隣のテキストも消えます）。</strong></p>
           </div>
-          <div class="form-group">
-            <label>置換元のテキスト</label>
-            <input type="text" name="textedit_old" id="texteditOldInput" placeholder="例: 48% または 48%OFF" autocomplete="off">
-            <p class="form-hint">画像内で検索するテキスト（部分一致）。上で検出されたテキストを指定してください。</p>
-          </div>
-          <div class="form-group">
-            <label>置換先のテキスト</label>
-            <input type="text" name="textedit_new" placeholder="例: 50% または 50%OFF" autocomplete="off">
+          <div class="options-form-row">
+            <div class="form-group">
+              <label>置換元のテキスト</label>
+              <input type="text" name="textedit_old" id="texteditOldInput" placeholder="例: 48% または 48%OFF" autocomplete="off">
+              <p class="form-hint">画像内で検索するテキスト（部分一致）</p>
+            </div>
+            <div class="form-group">
+              <label>置換先のテキスト</label>
+              <input type="text" name="textedit_new" placeholder="例: 50% または 50%OFF" autocomplete="off">
+            </div>
           </div>
           <div class="form-group textedit-advanced">
             <label>置換テキストの見た目（オプション）</label>
             <div class="textedit-advanced-row">
-              <div class="textedit-advanced-item">
-                <label class="textedit-advanced-label">フォントサイズ</label>
-                <input type="number" name="textedit_font_size" placeholder="自動" min="8" max="120" step="1" style="width: 5rem;">
-                <span class="textedit-unit">px</span>
+              <div class="textedit-advanced-item textedit-inpainting-wrap">
+                <label class="textedit-advanced-label">
+                  <input type="checkbox" name="textedit_inpainting" value="1" id="texteditInpaintingCheck">
+                  AIで背景を馴染ませる（LaMa）
+                </label>
+                <p class="form-hint" style="margin-top: 0.2rem;">テキスト領域をAIで補完。初回はモデルDLで数十秒かかります。</p>
               </div>
               <div class="textedit-advanced-item">
-                <label class="textedit-advanced-label">文字色</label>
-                <input type="color" id="texteditColorPicker" value="#000000" title="文字色" style="width: 2.5rem; height: 1.8rem; padding: 2px; cursor: pointer;">
-                <input type="text" name="textedit_text_color" id="texteditColorHex" placeholder="自動" style="width: 5rem; font-family: monospace;" maxlength="7" title="空欄で自動。例: #000000">
+                <label class="textedit-advanced-label">フォント</label>
+                <div class="textedit-advanced-controls-row">
+                  <select name="textedit_font" class="textedit-input-font">
+                    <option value="">自動</option>
+                    <option value="0">ヒラギノ角ゴ W6</option>
+                    <option value="1">ヒラギノ角ゴ W4</option>
+                    <option value="2">ヒラギノ丸ゴ W6</option>
+                    <option value="3">ヒラギノ丸ゴ W4</option>
+                    <option value="4">Arial Bold</option>
+                    <option value="5">Arial Black</option>
+                    <option value="6">Impact</option>
+                    <option value="7">Arial Bold (alt)</option>
+                    <option value="8">DejaVu Sans Bold</option>
+                    <option value="9">Liberation Sans Bold</option>
+                    <option value="10">Noto Sans CJK Bold</option>
+                    <option value="11">Noto Sans CJK Bold (alt)</option>
+                    <option value="12">Noto Sans CJK</option>
+                  </select>
+                  <input type="number" name="textedit_font_size" placeholder="自動" min="8" max="120" step="1" class="textedit-input-num">
+                  <span class="textedit-unit">px</span>
+                </div>
               </div>
-              <div class="textedit-advanced-item">
-                <label class="textedit-advanced-label">背景色</label>
-                <input type="color" id="texteditBgColorPicker" value="#c8c8c8" title="背景色" style="width: 2.5rem; height: 1.8rem; padding: 2px; cursor: pointer;">
-                <input type="text" name="textedit_bg_color" id="texteditBgColorHex" placeholder="自動" style="width: 5rem; font-family: monospace;" maxlength="7" title="空欄で自動。例: #22c55e">
+              <div class="textedit-advanced-row-colors">
+                <div class="textedit-advanced-item">
+                  <label class="textedit-advanced-label">文字色</label>
+                  <div class="textedit-advanced-controls-row">
+                    <input type="color" id="texteditColorPicker" value="#000000" title="文字色" class="textedit-input-color">
+                    <input type="text" name="textedit_text_color" id="texteditColorHex" placeholder="自動" class="textedit-input-hex" maxlength="7" title="空欄で自動">
+                    <button type="button" class="btn btn-pick-color" data-pick="text" title="プレビューから選択">🖌</button>
+                  </div>
+                </div>
+                <div class="textedit-advanced-item">
+                  <label class="textedit-advanced-label">背景色</label>
+                  <div class="textedit-advanced-controls-row">
+                    <input type="color" id="texteditBgColorPicker" value="#c8c8c8" title="背景色" class="textedit-input-color">
+                    <input type="text" name="textedit_bg_color" id="texteditBgColorHex" placeholder="自動" class="textedit-input-hex" maxlength="7" title="空欄で自動">
+                    <button type="button" class="btn btn-pick-color" data-pick="bg" title="プレビューから選択">🖌</button>
+                  </div>
+                </div>
+                <div class="textedit-advanced-item">
+                  <label class="textedit-advanced-label">縁色</label>
+                  <div class="textedit-advanced-controls-row">
+                    <input type="color" id="texteditOutlineColorPicker" value="#000000" title="縁色" class="textedit-input-color">
+                    <input type="text" name="textedit_outline_color" id="texteditOutlineColorHex" placeholder="自動" class="textedit-input-hex" maxlength="7" title="空欄で自動">
+                    <button type="button" class="btn btn-pick-color" data-pick="outline" title="プレビューから選択">🖌</button>
+                  </div>
+                </div>
               </div>
-              <div class="textedit-advanced-item">
-                <label class="textedit-advanced-label">縁色</label>
-                <input type="color" id="texteditOutlineColorPicker" value="#000000" title="縁色（白文字＋黒縁など）" style="width: 2.5rem; height: 1.8rem; padding: 2px; cursor: pointer;">
-                <input type="text" name="textedit_outline_color" id="texteditOutlineColorHex" placeholder="自動" style="width: 5rem; font-family: monospace;" maxlength="7" title="空欄で自動。白文字＋黒縁: 文字色 #ffffff、縁色 #000000">
+              <div class="textedit-advanced-item textedit-gradient-wrap">
+                <label class="textedit-advanced-label">
+                  <input type="checkbox" name="textedit_gradient" value="1" id="texteditGradientCheck">
+                  グラデーション
+                </label>
+                <div class="textedit-gradient-controls" id="texteditGradientControls">
+                  <div class="textedit-advanced-controls-row">
+                    <input type="color" id="texteditGradientStartPicker" value="#8b4513" title="開始色（上）" class="textedit-input-color">
+                    <input type="text" name="textedit_gradient_start" id="texteditGradientStartHex" placeholder="#8b4513" class="textedit-input-hex" maxlength="7" value="#8b4513">
+                    <button type="button" class="btn btn-pick-color" data-pick="gradient_start" title="プレビューから選択">🖌</button>
+                    <span class="textedit-gradient-arrow">→</span>
+                    <input type="color" id="texteditGradientMidPicker" value="#ffd700" title="中間色（ハイライト）" class="textedit-input-color">
+                    <input type="text" name="textedit_gradient_mid" id="texteditGradientMidHex" placeholder="#ffd700" class="textedit-input-hex" maxlength="7" value="#ffd700">
+                    <button type="button" class="btn btn-pick-color" data-pick="gradient_mid" title="プレビューから選択">🖌</button>
+                    <span class="textedit-gradient-arrow">→</span>
+                    <input type="color" id="texteditGradientEndPicker" value="#b8860b" title="終了色（下）" class="textedit-input-color">
+                    <input type="text" name="textedit_gradient_end" id="texteditGradientEndHex" placeholder="#b8860b" class="textedit-input-hex" maxlength="7" value="#b8860b">
+                    <button type="button" class="btn btn-pick-color" data-pick="gradient_end" title="プレビューから選択">🖌</button>
+                  </div>
+                  <div class="textedit-advanced-controls-row">
+                    <select name="textedit_gradient_direction">
+                      <option value="v">縦（上→下）</option>
+                      <option value="h">横（左→右）</option>
+                    </select>
+                  </div>
+                </div>
               </div>
               <div class="textedit-advanced-item">
                 <label class="textedit-advanced-label">縁の太さ</label>
-                <input type="number" name="textedit_outline_width" placeholder="自動" min="0" max="12" step="1" style="width: 4rem;">
-                <span class="textedit-unit">px</span>
+                <div class="textedit-advanced-controls-row">
+                  <input type="number" name="textedit_outline_width" placeholder="自動" min="0" max="12" step="1" class="textedit-input-num">
+                  <span class="textedit-unit">px</span>
+                </div>
               </div>
-              <div class="textedit-advanced-item">
-                <label class="textedit-advanced-label">位置オフセット</label>
-                <input type="number" name="textedit_pos_x" placeholder="X" style="width: 3.5rem;" title="右: + 左: -">
-                <input type="number" name="textedit_pos_y" placeholder="Y" style="width: 3.5rem;" title="下: + 上: -">
-                <span class="textedit-unit">px</span>
+              <div class="textedit-advanced-item textedit-advanced-item-pos">
+                <label class="textedit-advanced-label">位置</label>
+                <div class="textedit-advanced-controls-row">
+                  <input type="number" name="textedit_pos_x" placeholder="X" class="textedit-input-num textedit-input-num-sm" title="右: + 左: -">
+                  <input type="number" name="textedit_pos_y" placeholder="Y" class="textedit-input-num textedit-input-num-sm" title="下: + 上: -">
+                  <button type="button" class="btn btn-pos-center" data-center="x" title="X中央">X</button>
+                  <button type="button" class="btn btn-pos-center" data-center="y" title="Y中央">Y</button>
+                  <button type="button" class="btn btn-pos-center" data-center="xy" title="XY中央">XY</button>
+                </div>
               </div>
             </div>
-            <p class="form-hint">空欄のままなら自動。白文字＋黒縁: 文字色 #ffffff、縁色 #000000 を指定。</p>
+            <p class="form-hint" style="margin-top: 0.5rem;">空欄で自動。白文字+黒縁: 文字色 #ffffff、縁色 #000000</p>
             <div id="texteditLivePreviewWrap" class="textedit-live-preview" style="display: none;">
               <div class="textedit-live-preview-label">プレビュー（全体像・置換後の見た目をシミュレート）</div>
               <div class="textedit-preview-zoom-bar">
@@ -1414,13 +1647,15 @@
               </div>
             </div>
           </div>
-          <div class="form-group">
-            <label>出力形式</label>
-            <select name="output_format" data-mode="textedit">
-              <option value="png">PNG</option>
-              <option value="jpg">JPEG</option>
-              <option value="webp">WebP</option>
-            </select>
+          <div class="options-form-row">
+            <div class="form-group">
+              <label>出力形式</label>
+              <select name="output_format" data-mode="textedit">
+                <option value="png">PNG</option>
+                <option value="jpg">JPEG</option>
+                <option value="webp">WebP</option>
+              </select>
+            </div>
           </div>
           <p class="form-hint" style="margin-top: 0.5rem;">PaddleOCR を優先使用（日本語精度が高い）。編集範囲を指定した場合は PaddleOCR と EasyOCR の両方で検出し、長いテキストを優先して統合します。初回実行時にモデルをダウンロードします。</p>
         </div>
@@ -1455,13 +1690,15 @@
             <input type="hidden" id="pipelineCropWPct" value="100">
             <input type="hidden" id="pipelineCropHPct" value="100">
           </div>
-          <div class="form-group">
-            <label>出力形式</label>
-            <select name="output_format" data-mode="pipeline">
-              <option value="png">PNG</option>
-              <option value="jpg">JPEG</option>
-              <option value="webp">WebP</option>
-            </select>
+          <div class="options-form-row">
+            <div class="form-group">
+              <label>出力形式</label>
+              <select name="output_format" data-mode="pipeline">
+                <option value="png">PNG</option>
+                <option value="jpg">JPEG</option>
+                <option value="webp">WebP</option>
+              </select>
+            </div>
           </div>
           <input type="hidden" name="pipeline_steps" id="pipelineStepsInput" value="[]">
         </div>
@@ -2171,7 +2408,7 @@
     document.querySelectorAll('input[name="optimize_size_mode"]').forEach(radio => {
       radio.addEventListener('change', () => {
         document.getElementById('manualSizeOpts').style.display =
-          radio.value === 'manual' ? 'grid' : 'none';
+          radio.value === 'manual' ? 'flex' : 'none';
       });
     });
 
@@ -2399,7 +2636,10 @@
     function setupTexteditColorSync() {
       [[document.getElementById('texteditColorPicker'), document.getElementById('texteditColorHex')],
        [document.getElementById('texteditBgColorPicker'), document.getElementById('texteditBgColorHex')],
-       [document.getElementById('texteditOutlineColorPicker'), document.getElementById('texteditOutlineColorHex')]].forEach(([picker, hexInput]) => {
+       [document.getElementById('texteditOutlineColorPicker'), document.getElementById('texteditOutlineColorHex')],
+       [document.getElementById('texteditGradientStartPicker'), document.getElementById('texteditGradientStartHex')],
+       [document.getElementById('texteditGradientMidPicker'), document.getElementById('texteditGradientMidHex')],
+       [document.getElementById('texteditGradientEndPicker'), document.getElementById('texteditGradientEndHex')]].forEach(([picker, hexInput]) => {
         if (!picker || !hexInput) return;
         picker.addEventListener('input', () => { hexInput.value = picker.value; updateTexteditLivePreview(); });
         picker.addEventListener('change', () => { hexInput.value = picker.value; updateTexteditLivePreview(); });
@@ -2411,6 +2651,84 @@
       });
     }
     setupTexteditColorSync();
+
+    let texteditPickColorTarget = null;
+    let texteditPickColorAbort = null;
+
+    function setupTexteditColorPick() {
+      function setColor(target, hex) {
+        let picker, hexInput;
+        if (target === 'text') { picker = document.getElementById('texteditColorPicker'); hexInput = document.getElementById('texteditColorHex'); }
+        else if (target === 'bg') { picker = document.getElementById('texteditBgColorPicker'); hexInput = document.getElementById('texteditBgColorHex'); }
+        else if (target === 'outline') { picker = document.getElementById('texteditOutlineColorPicker'); hexInput = document.getElementById('texteditOutlineColorHex'); }
+        else if (target === 'gradient_start') { picker = document.getElementById('texteditGradientStartPicker'); hexInput = document.getElementById('texteditGradientStartHex'); }
+        else if (target === 'gradient_mid') { picker = document.getElementById('texteditGradientMidPicker'); hexInput = document.getElementById('texteditGradientMidHex'); }
+        else if (target === 'gradient_end') { picker = document.getElementById('texteditGradientEndPicker'); hexInput = document.getElementById('texteditGradientEndHex'); }
+        if (picker && hexInput) {
+          picker.value = hex;
+          hexInput.value = hex;
+          updateTexteditLivePreview();
+        }
+      }
+      function pickFromCanvas(canvas, e) {
+        const rect = canvas.getBoundingClientRect();
+        const x = Math.floor((e.clientX - rect.left) * (canvas.width / rect.width));
+        const y = Math.floor((e.clientY - rect.top) * (canvas.height / rect.height));
+        const ctx = canvas.getContext('2d');
+        const d = ctx.getImageData(Math.max(0, Math.min(x, canvas.width - 1)), Math.max(0, Math.min(y, canvas.height - 1)), 1, 1).data;
+        return '#' + [d[0], d[1], d[2]].map(c => c.toString(16).padStart(2, '0')).join('');
+      }
+      function pickFromImg(img, e) {
+        const rect = img.getBoundingClientRect();
+        const x = Math.floor((e.clientX - rect.left) * (img.naturalWidth / rect.width));
+        const y = Math.floor((e.clientY - rect.top) * (img.naturalHeight / rect.height));
+        const tmp = document.createElement('canvas');
+        tmp.width = img.naturalWidth;
+        tmp.height = img.naturalHeight;
+        const ctx = tmp.getContext('2d');
+        ctx.drawImage(img, 0, 0);
+        const d = ctx.getImageData(Math.max(0, Math.min(x, tmp.width - 1)), Math.max(0, Math.min(y, tmp.height - 1)), 1, 1).data;
+        return '#' + [d[0], d[1], d[2]].map(v => v.toString(16).padStart(2, '0')).join('');
+      }
+      function cancelPick() {
+        texteditPickColorTarget = null;
+        document.querySelectorAll('.btn-pick-color.picking').forEach(b => b.classList.remove('picking'));
+        const canvas = document.getElementById('texteditLivePreviewCanvas');
+        const img = document.getElementById('texteditCropPreviewImg');
+        if (canvas) { canvas.style.cursor = ''; canvas.onclick = null; }
+        if (img) { img.style.cursor = ''; img.onclick = null; }
+        document.removeEventListener('keydown', texteditPickColorAbort);
+      }
+      document.querySelectorAll('.btn-pick-color[data-pick]').forEach(btn => {
+        btn.onclick = () => {
+          if (texteditPickColorTarget) cancelPick();
+          texteditPickColorTarget = btn.dataset.pick;
+          btn.classList.add('picking');
+          texteditPickColorAbort = (e) => { if (e.key === 'Escape') cancelPick(); };
+          document.addEventListener('keydown', texteditPickColorAbort);
+          const canvas = document.getElementById('texteditLivePreviewCanvas');
+          const img = document.getElementById('texteditCropPreviewImg');
+          const handler = (e) => {
+            const hex = canvas ? pickFromCanvas(canvas, e) : (img && img.complete) ? pickFromImg(img, e) : null;
+            if (hex) {
+              setColor(texteditPickColorTarget, hex);
+              cancelPick();
+            }
+          };
+          if (canvas && canvas.width > 0) {
+            canvas.style.cursor = 'crosshair';
+            canvas.onclick = handler;
+          } else if (img && img.complete && img.naturalWidth > 0) {
+            img.style.cursor = 'crosshair';
+            img.onclick = handler;
+          } else {
+            alert('プレビューを表示するには置換先を入力してください');
+            cancelPick();
+          }
+        };
+      });
+    }
+    setupTexteditColorPick();
 
     function updateTexteditLivePreview() {
       const wrap = document.getElementById('texteditLivePreviewWrap');
@@ -2493,7 +2811,25 @@
         }
         const dx = parseInt(posXInput?.value) || 0;
         const dy = parseInt(posYInput?.value) || 0;
-        ctx.font = `bold ${fontSize}px "Hiragino Sans", "Hiragino Kaku Gothic ProN", "Yu Gothic", sans-serif`;
+        const fontSelect = document.querySelector('#optionsTextedit select[name="textedit_font"]');
+        const fontIdx = fontSelect?.value !== undefined && fontSelect.value !== '' ? parseInt(fontSelect.value, 10) : -1;
+        const PREVIEW_FONT_MAP = [
+          'bold ' + fontSize + 'px "Hiragino Kaku Gothic ProN", "Hiragino Sans", "Yu Gothic", sans-serif',
+          fontSize + 'px "Hiragino Kaku Gothic ProN", "Hiragino Sans", "Yu Gothic", sans-serif',
+          'bold ' + fontSize + 'px "Hiragino Maru Gothic ProN", "Hiragino Sans", "Yu Gothic", sans-serif',
+          fontSize + 'px "Hiragino Maru Gothic ProN", "Hiragino Sans", "Yu Gothic", sans-serif',
+          'bold ' + fontSize + 'px Arial, sans-serif',
+          '900 ' + fontSize + 'px Arial, sans-serif',
+          fontSize + 'px Impact, "Arial Black", sans-serif',
+          'bold ' + fontSize + 'px Arial, sans-serif',
+          'bold ' + fontSize + 'px "DejaVu Sans", sans-serif',
+          'bold ' + fontSize + 'px "Liberation Sans", sans-serif',
+          'bold ' + fontSize + 'px "Noto Sans CJK JP", "Noto Sans CJK", sans-serif',
+          'bold ' + fontSize + 'px "Noto Sans CJK JP", "Noto Sans CJK", sans-serif',
+          fontSize + 'px "Noto Sans CJK JP", "Noto Sans CJK", sans-serif'
+        ];
+        const defaultPreviewFont = 'bold ' + fontSize + 'px "Hiragino Kaku Gothic ProN", "Hiragino Sans", "Yu Gothic", sans-serif';
+        ctx.font = (fontIdx >= 0 && fontIdx < PREVIEW_FONT_MAP.length) ? PREVIEW_FONT_MAP[fontIdx] : defaultPreviewFont;
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
         const tx = scX + scW / 2 + dx;
@@ -2508,13 +2844,29 @@
           ctx.lineJoin = 'round';
           ctx.strokeText(newText, tx, ty);
         }
-        ctx.fillStyle = color;
+        const gradientCheck = document.getElementById('texteditGradientCheck');
+        const gradStartHex = (document.getElementById('texteditGradientStartHex')?.value || '#8b4513').trim().replace(/^#/, '');
+        const gradMidHex = (document.getElementById('texteditGradientMidHex')?.value || '#ffd700').trim().replace(/^#/, '');
+        const gradEndHex = (document.getElementById('texteditGradientEndHex')?.value || '#b8860b').trim().replace(/^#/, '');
+        const gradDir = document.querySelector('#optionsTextedit select[name="textedit_gradient_direction"]')?.value || 'v';
+        if (gradientCheck?.checked && /^[0-9a-fA-F]{6}$/.test(gradStartHex) && /^[0-9a-fA-F]{6}$/.test(gradEndHex)) {
+          const grad = ctx.createLinearGradient(
+            gradDir === 'h' ? scX : tx, gradDir === 'h' ? ty : scY,
+            gradDir === 'h' ? scX + scW : tx, gradDir === 'h' ? ty : scY + scH
+          );
+          grad.addColorStop(0, '#' + gradStartHex);
+          if (/^[0-9a-fA-F]{6}$/.test(gradMidHex)) grad.addColorStop(0.5, '#' + gradMidHex);
+          grad.addColorStop(1, '#' + gradEndHex);
+          ctx.fillStyle = grad;
+        } else {
+          ctx.fillStyle = color;
+        }
         ctx.fillText(newText, tx, ty);
       };
       img.src = texteditCropPreviewUrl || URL.createObjectURL(files[0]);
     }
     function setupTexteditLivePreviewListeners() {
-      ['textedit_new', 'textedit_font_size', 'textedit_pos_x', 'textedit_pos_y', 'textedit_text_color', 'textedit_bg_color', 'textedit_outline_color', 'textedit_outline_width'].forEach(name => {
+      ['textedit_new', 'textedit_font', 'textedit_font_size', 'textedit_pos_x', 'textedit_pos_y', 'textedit_text_color', 'textedit_bg_color', 'textedit_outline_color', 'textedit_outline_width', 'textedit_gradient', 'textedit_gradient_start', 'textedit_gradient_mid', 'textedit_gradient_end', 'textedit_gradient_direction'].forEach(name => {
         const el = document.querySelector(`#optionsTextedit [name="${name}"]`);
         if (el) {
           el.addEventListener('input', updateTexteditLivePreview);
@@ -2523,6 +2875,32 @@
       });
     }
     setupTexteditLivePreviewListeners();
+
+    function setupTexteditGradientToggle() {
+      const check = document.getElementById('texteditGradientCheck');
+      const controls = document.getElementById('texteditGradientControls');
+      if (check && controls) {
+        const toggle = () => { controls.style.opacity = check.checked ? '1' : '0.5'; controls.style.pointerEvents = check.checked ? '' : 'none'; };
+        check.addEventListener('change', () => { toggle(); updateTexteditLivePreview(); });
+        toggle();
+      }
+    }
+    setupTexteditGradientToggle();
+
+    function setupTexteditPosCenterButtons() {
+      const posX = document.querySelector('#optionsTextedit input[name="textedit_pos_x"]');
+      const posY = document.querySelector('#optionsTextedit input[name="textedit_pos_y"]');
+      document.querySelectorAll('.btn-pos-center[data-center]').forEach(btn => {
+        btn.onclick = () => {
+          const c = btn.dataset.center;
+          if (c === 'x' && posX) { posX.value = '0'; }
+          if (c === 'y' && posY) { posY.value = '0'; }
+          if (c === 'xy') { if (posX) posX.value = '0'; if (posY) posY.value = '0'; }
+          updateTexteditLivePreview();
+        };
+      });
+    }
+    setupTexteditPosCenterButtons();
 
     function setupTexteditPreviewZoomButtons() {
       document.querySelectorAll('.textedit-preview-zoom-bar .btn-zoom[data-preview-zoom]').forEach(btn => {
