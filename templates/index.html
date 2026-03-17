@@ -591,6 +591,11 @@
       animation: cta-preview-shine 2s ease-in-out infinite;
     }
     .cta-preview-inner.cta-effect-ripple { cursor: pointer; overflow: hidden; position: relative; }
+    .cta-preview-inner.cta-effect-magnetic,
+    .cta-preview-inner.cta-effect-parallax,
+    .cta-preview-inner.cta-effect-spotlight,
+    .cta-preview-inner.cta-effect-particle,
+    .cta-preview-inner.cta-effect-cursor_glow { cursor: pointer; animation: cta-preview-pulse 1.5s ease-in-out infinite; }
     @keyframes cta-preview-pulse {
       0%, 100% { transform: scale(1); filter: brightness(1); }
       50% { transform: scale(1.05); filter: brightness(1.1); }
@@ -1318,12 +1323,54 @@
       border-radius: 8px;
       overflow: auto;
       max-height: 400px;
-      cursor: zoom-in;
+    }
+    .result-preview-nonimage {
+      padding: 1rem;
+      background: var(--bg);
+      border-radius: 8px;
+      border: 1px solid var(--border);
+    }
+    .result-preview-nonimage-msg {
+      font-weight: 600;
+      margin: 0 0 0.5rem 0;
+    }
+    .result-preview-code-wrap {
+      margin-top: 0.75rem;
+      max-height: 320px;
+      overflow: auto;
+      cursor: text;
+      background: #1a1a1a;
+      border-radius: 6px;
+      padding: 0.75rem;
+      font-family: 'Consolas', 'Monaco', 'Menlo', monospace;
+      font-size: 12px;
+      line-height: 1.4;
+      color: #e0e0e0;
+      white-space: pre-wrap;
+      word-break: break-all;
+      text-align: left;
+    }
+    .result-preview-code-wrap code {
+      display: block;
+    }
+    .result-preview-copy-btn {
+      margin-top: 0.5rem;
+      padding: 0.35rem 0.75rem;
+      font-size: 13px;
+      cursor: pointer;
+      background: var(--accent);
+      color: #fff;
+      border: none;
+      border-radius: 6px;
+    }
+    .result-preview-copy-btn:hover {
+      opacity: 0.9;
     }
     .result-preview-wrap img {
       max-width: 100%;
       max-height: 360px;
       object-fit: contain;
+      cursor: zoom-in;
     }
 
     .preview-zoom-overlay {
@@ -1798,28 +1845,33 @@
               <option value="rubber">ラバー（ゴムのように伸び縮み）</option>
               <option value="breathe">ブリーズ（ゆっくり膨らむ・縮む）</option>
               <option value="attention">アテンション（一瞬大きく動く）</option>
-              <option value="shine">シャイン（光が走る・JS）</option>
+              <option value="shine">シャイン（光が走る）</option>
               <option value="ripple">リップル（クリックで波紋・JS）</option>
               <option value="tilt">チルト（3Dで傾いて浮く）</option>
+              <option value="magnetic">マグネティック（カーソルに吸い寄せ・JS）</option>
+              <option value="parallax">パララックス（マウスで3D傾き・JS）</option>
+              <option value="spotlight">スポットライト（カーソルに光追従・JS）</option>
+              <option value="particle">パーティクル（クリックで粒子・JS）</option>
+              <option value="cursor_glow">カーソルグロー（カーソルに光追従・JS）</option>
             </select>
           </div>
           <div class="form-group">
             <label>出力形式</label>
-            <div class="options-form-row" style="flex-wrap: wrap; gap: 0.5rem;">
-              <label class="toggle-option" style="display: flex; align-items: center; gap: 0.35rem; cursor: pointer;">
+            <div id="ctaOutputOptions" class="options-form-row" style="flex-wrap: wrap; gap: 0.5rem;">
+              <label class="toggle-option cta-output-option" data-cta-output="gif" style="display: flex; align-items: center; gap: 0.35rem; cursor: pointer;">
                 <input type="radio" name="cta_output" value="gif" checked>
                 <span>GIF でダウンロード</span>
               </label>
-              <label class="toggle-option" style="display: flex; align-items: center; gap: 0.35rem; cursor: pointer;">
+              <label class="toggle-option cta-output-option" data-cta-output="code" style="display: flex; align-items: center; gap: 0.35rem; cursor: pointer;">
                 <input type="radio" name="cta_output" value="code">
-                <span>ソースコード（HTML+CSS）</span>
+                <span>ソースコード</span>
               </label>
-              <label class="toggle-option" style="display: flex; align-items: center; gap: 0.35rem; cursor: pointer;">
+              <label class="toggle-option cta-output-option" data-cta-output="both" style="display: flex; align-items: center; gap: 0.35rem; cursor: pointer;">
                 <input type="radio" name="cta_output" value="both">
                 <span>両方</span>
               </label>
             </div>
-            <p class="form-hint">CTA ボタンやバナー画像に動きを付けます。GIF はそのまま使え、コードは LP に組み込み可能です。シャイン・リップルは HTML+CSS+JS で生成されます。</p>
+            <p id="ctaOutputHint" class="form-hint">CTA ボタンやバナー画像に動きを付けます。GIF はそのまま使え、コードは LP に組み込み可能です。</p>
           </div>
           <div id="ctaPreviewWrap" class="cta-preview-wrap" style="display: none;">
             <div class="cta-preview-label">プレビュー（選択した効果をリアルタイム表示・リップルはクリックで波紋）</div>
@@ -1894,6 +1946,14 @@
           <div class="result-preview-label">プレビュー <span class="hint">（クリックで拡大）</span></div>
           <div class="result-preview-wrap" id="resultPreviewWrap">
             <img id="resultPreviewImg" src="" alt="結果プレビュー">
+            <div id="resultPreviewNonImage" class="result-preview-nonimage" style="display: none;">
+              <p class="result-preview-nonimage-msg">生成されたコード</p>
+              <p class="result-preview-nonimage-hint form-hint">ZIPが必要な場合は保存ボタンからダウンロードしてください。</p>
+              <div id="resultPreviewCodeWrap" class="result-preview-code-wrap" style="display: none;">
+                <code id="resultPreviewCode"></code>
+              </div>
+              <button type="button" class="result-preview-copy-btn" id="resultPreviewCopyBtn" style="display: none;">コピー</button>
+            </div>
           </div>
         </div>
         <div class="message" id="message"></div>
@@ -1945,6 +2005,7 @@
   </div>
 
   <script>
+    const CTA_EFFECTS_NO_GIF = {{ cta_effects_no_gif|default([])|tojson }};
     const uploadZone = document.getElementById('uploadZone');
     const fileInput = document.getElementById('fileInput');
     const fileName = document.getElementById('fileName');
@@ -2125,33 +2186,89 @@
       const el = document.getElementById('resultPreview');
       el.classList.remove('visible');
       const img = document.getElementById('resultPreviewImg');
+      const nonImg = document.getElementById('resultPreviewNonImage');
       if (img) {
         img.src = '';
         img.style.display = '';
       }
+      if (nonImg) nonImg.style.display = 'none';
       if (resultPreviewUrl) {
         URL.revokeObjectURL(resultPreviewUrl);
         resultPreviewUrl = null;
       }
     }
 
-    function showResultPreview(blob) {
+    function showResultPreview(blob, filename) {
       hideResultPreview();
       if (!blob) return;
       const img = document.getElementById('resultPreviewImg');
+      const nonImg = document.getElementById('resultPreviewNonImage');
       const previewWrap = document.getElementById('resultPreview');
-      // サーバーは application/octet-stream で返すため、image/ 以外でも画像として表示
-      const isImage = blob.type.startsWith('image/') || blob.type === 'application/octet-stream';
+      const isImage = blob.type.startsWith('image/') || (blob.type === 'application/octet-stream' && filename && !filename.endsWith('.zip') && !filename.endsWith('.html'));
       if (isImage) {
         resultPreviewUrl = URL.createObjectURL(blob);
         img.src = resultPreviewUrl;
         img.style.display = '';
+        if (nonImg) nonImg.style.display = 'none';
       } else {
         img.src = '';
         img.style.display = 'none';
         resultPreviewUrl = null;
+        if (nonImg) {
+          nonImg.style.display = 'block';
+          const msg = nonImg.querySelector('.result-preview-nonimage-msg');
+          const hint = nonImg.querySelector('.result-preview-nonimage-hint');
+          const codeWrap = nonImg.querySelector('#resultPreviewCodeWrap');
+          const codeEl = nonImg.querySelector('#resultPreviewCode');
+          const copyBtn = nonImg.querySelector('#resultPreviewCopyBtn');
+          const canCopy = (filename && filename.endsWith('.zip')) || blob.type === 'text/html';
+          if (msg) msg.textContent = canCopy ? '生成されたコード' : 'ダウンロード準備完了';
+          if (hint) hint.textContent = canCopy ? 'ZIPが必要な場合は保存ボタンからダウンロードしてください。' : '保存ボタンをクリックしてダウンロードしてください。';
+          if (codeWrap) codeWrap.style.display = 'none';
+          if (copyBtn) copyBtn.style.display = 'none';
+          if (canCopy) {
+            (async () => {
+              try {
+                let html = '';
+                if (blob.type === 'text/html') {
+                  html = await blob.text();
+                } else if (filename && filename.endsWith('.zip')) {
+                  const zip = await JSZip.loadAsync(blob);
+                  const htmlFiles = Object.keys(zip.files).filter(n => n.toLowerCase().endsWith('.html'));
+                  if (htmlFiles.length) {
+                    const first = zip.file(htmlFiles[0]);
+                    html = await first.async('string');
+                  }
+                }
+                if (html && codeEl && codeWrap && copyBtn) {
+                  codeEl.textContent = html;
+                  codeWrap.style.display = 'block';
+                  copyBtn.style.display = 'inline-block';
+                }
+              } catch (_) {}
+            })();
+          }
+        }
       }
       previewWrap.classList.add('visible');
+    }
+
+    // コピーボタン（生成コードをクリップボードにコピー）
+    const resultPreviewCopyBtn = document.getElementById('resultPreviewCopyBtn');
+    if (resultPreviewCopyBtn) {
+      resultPreviewCopyBtn.addEventListener('click', async () => {
+        const codeEl = document.getElementById('resultPreviewCode');
+        if (!codeEl || !codeEl.textContent) return;
+        try {
+          await navigator.clipboard.writeText(codeEl.textContent);
+          const orig = resultPreviewCopyBtn.textContent;
+          resultPreviewCopyBtn.textContent = 'コピーしました！';
+          setTimeout(() => { resultPreviewCopyBtn.textContent = orig; }, 2000);
+        } catch (err) {
+          message.className = 'message error';
+          message.textContent = 'コピーに失敗しました: ' + (err.message || err);
+        }
+      });
     }
 
     // プレビュー拡大
@@ -2184,6 +2301,7 @@
 
         document.getElementById('submitBtnText').textContent = mode === 'removebg' ? '背景透過' : mode === 'crop' ? '切り取り' : mode === 'pipeline' ? 'パイプライン実行' : '処理を実行';
         if (mode === 'textedit' && typeof updateTexteditLivePreview === 'function') updateTexteditLivePreview();
+        if (mode === 'cta') updateCtaOutputOptions();
 
         if (mode === 'crop') {
           initCropPreview();
@@ -2214,6 +2332,32 @@
       });
     });
 
+    // CTA アニメーション: 出力形式の表示切り替え（GIF不可のエフェクトはソースコードのみ）
+    function updateCtaOutputOptions() {
+      const effectSelect = document.getElementById('ctaEffectSelect');
+      const hint = document.getElementById('ctaOutputHint');
+      if (!effectSelect || !hint) return;
+      const effect = effectSelect.value;
+      const noGif = Array.isArray(CTA_EFFECTS_NO_GIF) && CTA_EFFECTS_NO_GIF.includes(effect);
+      document.querySelectorAll('.cta-output-option').forEach(function(label) {
+        const val = label.getAttribute('data-cta-output');
+        const radio = label.querySelector('input[type="radio"]');
+        if (noGif) {
+          if (val === 'gif' || val === 'both') {
+            label.style.display = 'none';
+          } else {
+            label.style.display = 'flex';
+            if (radio) radio.checked = true;
+          }
+      } else {
+        label.style.display = 'flex';
+      }
+      });
+      hint.textContent = noGif
+        ? 'このエフェクトはカーソル操作に依存するため、ソースコードのみ出力できます。'
+        : 'CTA ボタンやバナー画像に動きを付けます。GIF はそのまま使え、コードは LP に組み込み可能です。';
+    }
+
     // CTA アニメーション: プレビュー
     function updateCtaPreview() {
       const wrap = document.getElementById('ctaPreviewWrap');
@@ -2238,7 +2382,10 @@
       inner.className = 'cta-preview-inner cta-effect-' + effect;
       wrap.style.display = 'block';
     }
-    document.getElementById('ctaEffectSelect')?.addEventListener('change', updateCtaPreview);
+    document.getElementById('ctaEffectSelect')?.addEventListener('change', function() {
+      updateCtaOutputOptions();
+      updateCtaPreview();
+    });
     document.getElementById('ctaPreviewInner')?.addEventListener('click', function(e) {
       if (document.getElementById('ctaEffectSelect')?.value !== 'ripple') return;
       const inner = this;
@@ -3598,7 +3745,7 @@
           saveFilenameInput.value = filename;
           saveArea.style.display = 'block';
           submitBtn.disabled = true;
-          showResultPreview(blob);
+          showResultPreview(blob, filename);
           updateResetBtn();
           message.className = 'message success';
           message.textContent = `${total}件処理・処理が完了しました。保存ボタンをクリックしてください。`;
@@ -3716,7 +3863,7 @@
           saveFilenameInput.value = filename;
           saveArea.style.display = 'block';
           submitBtn.disabled = true;
-          showResultPreview(blob);
+          showResultPreview(blob, filename);
           updateResetBtn();
           message.className = 'message success';
           message.textContent = `${total}件処理・処理が完了しました。保存ボタンをクリックしてください。`;
@@ -3771,7 +3918,7 @@
           saveFilenameInput.value = filename;
           saveArea.style.display = 'block';
           submitBtn.disabled = true;
-          showResultPreview(blob);
+          showResultPreview(blob, filename);
           updateResetBtn();
           message.className = 'message success';
           message.textContent = '処理が完了しました。保存ボタンをクリックしてください。';
@@ -3842,7 +3989,7 @@
           saveFilenameInput.value = finalFilename;
           saveArea.style.display = 'block';
           submitBtn.disabled = true;
-          showResultPreview(finalBlob);
+          showResultPreview(finalBlob, finalFilename);
           updateResetBtn();
           message.className = 'message success';
           message.style.color = '';
@@ -3863,6 +4010,7 @@
           saveFilenameInput.value = finalFilename;
           saveArea.style.display = 'block';
           submitBtn.disabled = true;
+          showResultPreview(finalBlob, finalFilename);
           updateResetBtn();
           message.className = 'message success';
           message.style.color = '';

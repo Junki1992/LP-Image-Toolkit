@@ -25,10 +25,18 @@ EFFECTS = {
     "rubber": {"label": "ラバー", "desc": "ゴムのように伸び縮み"},
     "breathe": {"label": "ブリーズ", "desc": "ゆっくり膨らむ・縮む"},
     "attention": {"label": "アテンション", "desc": "一瞬大きく動いて注目を集める"},
-    "shine": {"label": "シャイン", "desc": "光が走る（JS）"},
-    "ripple": {"label": "リップル", "desc": "クリックで波紋が広がる（JS）"},
+    "shine": {"label": "シャイン", "desc": "光が走る"},
+    "ripple": {"label": "リップル", "desc": "クリックで波紋（JS）"},
     "tilt": {"label": "チルト", "desc": "3Dで傾いて浮く"},
+    "magnetic": {"label": "マグネティック", "desc": "カーソルに吸い寄せられる（JS）"},
+    "parallax": {"label": "パララックス", "desc": "マウスで3D傾き（JS）"},
+    "spotlight": {"label": "スポットライト", "desc": "カーソルに光が追従（JS）"},
+    "particle": {"label": "パーティクル", "desc": "クリックで粒子が飛ぶ（JS）"},
+    "cursor_glow": {"label": "カーソルグロー", "desc": "カーソルに光が追従（JS）"},
 }
+
+# カーソル操作に依存するためGIF出力不可
+CTA_EFFECTS_NO_GIF = frozenset({"magnetic", "parallax", "spotlight", "cursor_glow"})
 
 
 def _ensure_rgba(img: Image.Image) -> Image.Image:
@@ -277,6 +285,11 @@ def _get_effect_func(effect: str):
         "shine": _apply_shine_frame,
         "ripple": _apply_ripple_frame,
         "tilt": _apply_tilt_frame,
+        "magnetic": _apply_pulse_frame,
+        "parallax": _apply_pulse_frame,
+        "spotlight": _apply_pulse_frame,
+        "particle": _apply_pulse_frame,
+        "cursor_glow": _apply_pulse_frame,
     }.get(effect)
     if not f:
         raise ValueError(f"未知のエフェクト: {effect}")
@@ -316,6 +329,11 @@ def generate_gif(
     )
 
 
+# 生成コード内の画像パス（ユーザーが任意に設定するプレースホルダ）
+CODE_IMG_PLACEHOLDER = "YOUR_IMAGE.png"
+CODE_IMG_PLACEHOLDER_GIF = "YOUR_IMAGE.gif"
+
+
 def generate_code(
     image_path: str,
     effect: str,
@@ -323,40 +341,41 @@ def generate_code(
 ) -> str:
     """
     指定エフェクトの HTML + CSS ソースコードを生成
-    image_filename: 画像のファイル名（コード内で参照、None の場合はプレースホルダ）
+    画像パスはプレースホルダで出力し、ユーザーが任意に設定する
+    image_filename: "both"の場合はYOUR_IMAGE.gif、それ以外はYOUR_IMAGE.png
     """
-    fname = image_filename or "cta-image.png"
+    fname = image_filename if image_filename else CODE_IMG_PLACEHOLDER
     if effect == "shine":
         return _generate_shine_code(fname)
     if effect == "ripple":
         return _generate_ripple_code(fname)
+    if effect == "magnetic":
+        return _generate_magnetic_code(fname)
+    if effect == "parallax":
+        return _generate_parallax_code(fname)
+    if effect == "spotlight":
+        return _generate_spotlight_code(fname)
+    if effect == "particle":
+        return _generate_particle_code(fname)
+    if effect == "cursor_glow":
+        return _generate_cursor_glow_code(fname)
     effect_props, effect_keyframes = _get_effect_css(effect)
-    return f"""<!DOCTYPE html>
-<html lang="ja">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>CTA アニメーション</title>
-  <style>
-    .cta-wrap {{
-      display: inline-block;
-      {effect_props}
-    }}
-    {effect_keyframes}
-    .cta-wrap img {{
-      display: block;
-      max-width: 100%;
-      height: auto;
-    }}
-  </style>
-</head>
-<body>
-  <div class="cta-wrap">
-    <img src="{fname}" alt="CTA">
-  </div>
-</body>
-</html>
-"""
+    return f"""<!-- 画像パス（YOUR_IMAGE.png）を任意のパスに変更してください -->
+<style>
+.cta-wrap {{
+  display: inline-block;
+  {effect_props}
+}}
+{effect_keyframes}
+.cta-wrap img {{
+  display: block;
+  max-width: 100%;
+  height: auto;
+}}
+</style>
+<div class="cta-wrap">
+  <img src="{fname}" alt="CTA">
+</div>"""
 
 
 def _get_effect_css(effect: str):
@@ -396,100 +415,317 @@ def _get_effect_css(effect: str):
 
 def _generate_shine_code(fname: str) -> str:
     """シャイン: 光が走る（CSS 疑似要素）"""
-    return f"""<!DOCTYPE html>
-<html lang="ja">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>CTA アニメーション - シャイン</title>
-  <style>
-    .cta-wrap {{
-      display: inline-block;
-      position: relative;
-      overflow: hidden;
-    }}
-    .cta-wrap::after {{
-      content: '';
-      position: absolute;
-      top: 0; left: -100%;
-      width: 50%;
-      height: 100%;
-      background: linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent);
-      animation: cta-shine 2s ease-in-out infinite;
-    }}
-    @keyframes cta-shine {{
-      0% {{ left: -100%; }}
-      50% {{ left: 150%; }}
-      100% {{ left: 150%; }}
-    }}
-    .cta-wrap img {{
-      display: block;
-      max-width: 100%;
-      height: auto;
-    }}
-  </style>
-</head>
-<body>
-  <div class="cta-wrap">
-    <img src="{fname}" alt="CTA">
-  </div>
-</body>
-</html>
-"""
+    return f"""<!-- 画像パス（{fname}）を任意のパスに変更してください -->
+<style>
+.cta-wrap {{
+  display: inline-block;
+  position: relative;
+  overflow: hidden;
+}}
+.cta-wrap::after {{
+  content: '';
+  position: absolute;
+  top: 0; left: -100%;
+  width: 50%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent);
+  animation: cta-shine 2s ease-in-out infinite;
+}}
+@keyframes cta-shine {{
+  0% {{ left: -100%; }}
+  50% {{ left: 150%; }}
+  100% {{ left: 150%; }}
+}}
+.cta-wrap img {{
+  display: block;
+  max-width: 100%;
+  height: auto;
+}}
+</style>
+<div class="cta-wrap">
+  <img src="{fname}" alt="CTA">
+</div>"""
 
 
 def _generate_ripple_code(fname: str) -> str:
     """リップル: クリックで波紋（JS）"""
-    return f"""<!DOCTYPE html>
-<html lang="ja">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>CTA アニメーション - リップル</title>
-  <style>
-    .cta-wrap {{
-      display: inline-block;
-      position: relative;
-      overflow: hidden;
-      cursor: pointer;
-    }}
-    .cta-wrap img {{
-      display: block;
-      max-width: 100%;
-      height: auto;
-    }}
-    .cta-ripple {{
-      position: absolute;
-      border-radius: 50%;
-      background: rgba(255,255,255,0.5);
-      transform: scale(0);
-      animation: cta-ripple 0.6s ease-out forwards;
-      pointer-events: none;
-    }}
-    @keyframes cta-ripple {{
-      to {{ transform: scale(4); opacity: 0; }}
-    }}
-  </style>
-</head>
-<body>
-  <div class="cta-wrap" id="ctaRipple">
-    <img src="{fname}" alt="CTA">
-  </div>
-  <script>
-    const wrap = document.getElementById('ctaRipple');
-    wrap.addEventListener('click', function(e) {{
-      const rect = wrap.getBoundingClientRect();
-      const x = e.clientX - rect.left;
-      const y = e.clientY - rect.top;
-      const ripple = document.createElement('span');
-      ripple.className = 'cta-ripple';
-      ripple.style.width = ripple.style.height = '100px';
-      ripple.style.left = (x - 50) + 'px';
-      ripple.style.top = (y - 50) + 'px';
-      wrap.appendChild(ripple);
-      setTimeout(() => ripple.remove(), 600);
+    return f"""<!-- 画像パス（{fname}）を任意のパスに変更してください -->
+<style>
+.cta-wrap {{
+  display: inline-block;
+  position: relative;
+  overflow: hidden;
+  cursor: pointer;
+}}
+.cta-wrap img {{
+  display: block;
+  max-width: 100%;
+  height: auto;
+}}
+.cta-ripple {{
+  position: absolute;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.5);
+  transform: scale(0);
+  animation: cta-ripple 0.6s ease-out forwards;
+  pointer-events: none;
+}}
+@keyframes cta-ripple {{
+  to {{ transform: scale(4); opacity: 0; }}
+}}
+</style>
+<div class="cta-wrap" data-cta-ripple>
+  <img src="{fname}" alt="CTA">
+</div>
+<script>
+(function() {{
+  document.querySelectorAll('[data-cta-ripple]').forEach(function(wrap) {{
+  wrap.addEventListener('click', function(e) {{
+    const rect = wrap.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
+    const ripple = document.createElement('span');
+    ripple.className = 'cta-ripple';
+    ripple.style.width = ripple.style.height = '100px';
+    ripple.style.left = (x - 50) + 'px';
+    ripple.style.top = (y - 50) + 'px';
+    wrap.appendChild(ripple);
+    setTimeout(function() {{ ripple.remove(); }}, 600);
+  }});
+  }});
+}})();
+</script>"""
+
+
+def _generate_magnetic_code(fname: str) -> str:
+    """マグネティック: カーソルに吸い寄せられる"""
+    return f"""<!-- 画像パス（{fname}）を任意のパスに変更してください -->
+<style>
+.cta-wrap {{
+  display: inline-block;
+  position: relative;
+  cursor: pointer;
+  transition: transform 0.15s ease-out;
+}}
+.cta-wrap img {{
+  display: block;
+  max-width: 100%;
+  height: auto;
+}}
+</style>
+<div class="cta-wrap" data-cta-magnetic>
+  <img src="{fname}" alt="CTA">
+</div>
+<script>
+(function() {{
+  document.querySelectorAll('[data-cta-magnetic]').forEach(function(wrap) {{
+    var strength = 20;
+    wrap.addEventListener('mousemove', function(e) {{
+      var rect = wrap.getBoundingClientRect();
+      var cx = rect.left + rect.width / 2;
+      var cy = rect.top + rect.height / 2;
+      var dx = (e.clientX - cx) / rect.width * strength;
+      var dy = (e.clientY - cy) / rect.height * strength;
+      wrap.style.transform = 'translate(' + dx + 'px, ' + dy + 'px)';
     }});
-  </script>
-</body>
-</html>
-"""
+    wrap.addEventListener('mouseleave', function() {{
+      wrap.style.transform = 'translate(0, 0)';
+    }});
+  }});
+}})();
+</script>"""
+
+
+def _generate_parallax_code(fname: str) -> str:
+    """パララックス: マウスで3D傾き"""
+    return f"""<!-- 画像パス（{fname}）を任意のパスに変更してください -->
+<style>
+.cta-wrap {{
+  display: inline-block;
+  position: relative;
+  cursor: pointer;
+  transform-style: preserve-3d;
+  perspective: 1000px;
+  transition: transform 0.1s ease-out;
+}}
+.cta-wrap img {{
+  display: block;
+  max-width: 100%;
+  height: auto;
+}}
+</style>
+<div class="cta-wrap" data-cta-parallax>
+  <img src="{fname}" alt="CTA">
+</div>
+<script>
+(function() {{
+  document.querySelectorAll('[data-cta-parallax]').forEach(function(wrap) {{
+    var maxRotate = 12;
+    wrap.addEventListener('mousemove', function(e) {{
+      var rect = wrap.getBoundingClientRect();
+      var x = (e.clientX - rect.left) / rect.width - 0.5;
+      var y = (e.clientY - rect.top) / rect.height - 0.5;
+      var rotateY = x * maxRotate;
+      var rotateX = -y * maxRotate;
+      wrap.style.transform = 'perspective(1000px) rotateX(' + rotateX + 'deg) rotateY(' + rotateY + 'deg)';
+    }});
+    wrap.addEventListener('mouseleave', function() {{
+      wrap.style.transform = 'perspective(1000px) rotateX(0) rotateY(0)';
+    }});
+  }});
+}})();
+</script>"""
+
+
+def _generate_spotlight_code(fname: str) -> str:
+    """スポットライト: カーソルに光が追従"""
+    return f"""<!-- 画像パス（{fname}）を任意のパスに変更してください -->
+<style>
+.cta-wrap {{
+  display: inline-block;
+  position: relative;
+  overflow: hidden;
+  cursor: pointer;
+}}
+.cta-wrap img {{
+  display: block;
+  max-width: 100%;
+  height: auto;
+}}
+.cta-spotlight {{
+  position: absolute;
+  width: 150px;
+  height: 150px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(255,255,255,0.5) 0%, transparent 70%);
+  pointer-events: none;
+  transform: translate(-50%, -50%);
+}}
+</style>
+<div class="cta-wrap" data-cta-spotlight>
+  <img src="{fname}" alt="CTA">
+  <span class="cta-spotlight"></span>
+</div>
+<script>
+(function() {{
+  document.querySelectorAll('[data-cta-spotlight]').forEach(function(wrap) {{
+    var el = wrap.querySelector('.cta-spotlight');
+    if (!el) return;
+    wrap.addEventListener('mousemove', function(e) {{
+      var rect = wrap.getBoundingClientRect();
+      el.style.left = (e.clientX - rect.left) + 'px';
+      el.style.top = (e.clientY - rect.top) + 'px';
+    }});
+    wrap.addEventListener('mouseleave', function() {{
+      el.style.left = '-999px';
+      el.style.top = '-999px';
+    }});
+  }});
+}})();
+</script>"""
+
+
+def _generate_particle_code(fname: str) -> str:
+    """パーティクル: クリックで粒子が飛ぶ"""
+    return f"""<!-- 画像パス（{fname}）を任意のパスに変更してください -->
+<style>
+.cta-wrap {{
+  display: inline-block;
+  position: relative;
+  overflow: visible;
+  cursor: pointer;
+}}
+.cta-wrap img {{
+  display: block;
+  max-width: 100%;
+  height: auto;
+}}
+.cta-particle {{
+  position: absolute;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.9);
+  pointer-events: none;
+  animation: cta-particle-fly 0.6s ease-out forwards;
+}}
+@keyframes cta-particle-fly {{
+  to {{ transform: translate(var(--tx), var(--ty)) scale(0); opacity: 0; }}
+}}
+</style>
+<div class="cta-wrap" data-cta-particle>
+  <img src="{fname}" alt="CTA">
+</div>
+<script>
+(function() {{
+  document.querySelectorAll('[data-cta-particle]').forEach(function(wrap) {{
+    wrap.addEventListener('click', function(e) {{
+      var rect = wrap.getBoundingClientRect();
+      var count = 12;
+      for (var i = 0; i < count; i++) {{
+        var angle = (i / count) * Math.PI * 2;
+        var dist = 60 + Math.random() * 40;
+        var tx = Math.cos(angle) * dist;
+        var ty = Math.sin(angle) * dist;
+        var p = document.createElement('span');
+        p.className = 'cta-particle';
+        p.style.left = (e.clientX - rect.left) + 'px';
+        p.style.top = (e.clientY - rect.top) + 'px';
+        p.style.setProperty('--tx', tx + 'px');
+        p.style.setProperty('--ty', ty + 'px');
+        wrap.appendChild(p);
+        setTimeout(function() {{ p.remove(); }}, 600);
+      }}
+    }});
+  }});
+}})();
+</script>"""
+
+
+def _generate_cursor_glow_code(fname: str) -> str:
+    """カーソルグロー: カーソルに光が追従"""
+    return f"""<!-- 画像パス（{fname}）を任意のパスに変更してください -->
+<style>
+.cta-wrap {{
+  display: inline-block;
+  position: relative;
+  overflow: hidden;
+  cursor: pointer;
+}}
+.cta-wrap img {{
+  display: block;
+  max-width: 100%;
+  height: auto;
+}}
+.cta-cursor-glow {{
+  position: absolute;
+  width: 120px;
+  height: 120px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(255,255,255,0.4) 0%, rgba(255,255,255,0.1) 40%, transparent 70%);
+  pointer-events: none;
+  transform: translate(-50%, -50%);
+  filter: blur(8px);
+}}
+</style>
+<div class="cta-wrap" data-cta-cursor-glow>
+  <img src="{fname}" alt="CTA">
+  <span class="cta-cursor-glow"></span>
+</div>
+<script>
+(function() {{
+  document.querySelectorAll('[data-cta-cursor-glow]').forEach(function(wrap) {{
+    var el = wrap.querySelector('.cta-cursor-glow');
+    if (!el) return;
+    wrap.addEventListener('mousemove', function(e) {{
+      var rect = wrap.getBoundingClientRect();
+      el.style.left = (e.clientX - rect.left) + 'px';
+      el.style.top = (e.clientY - rect.top) + 'px';
+    }});
+    wrap.addEventListener('mouseleave', function() {{
+      el.style.left = '-999px';
+      el.style.top = '-999px';
+    }});
+  }});
+}})();
+</script>"""

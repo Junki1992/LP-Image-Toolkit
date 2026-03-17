@@ -18,7 +18,7 @@ from werkzeug.utils import secure_filename
 
 from upscale import convert, crop, optimize, optimize_video, remove_background, upscale
 from textedit import detect_text, replace_text
-from cta_animation import generate_gif, generate_code, EFFECTS
+from cta_animation import generate_gif, generate_code, EFFECTS, CTA_EFFECTS_NO_GIF, CODE_IMG_PLACEHOLDER, CODE_IMG_PLACEHOLDER_GIF
 
 STEP_LABELS = {
     "removebg": "背景削除",
@@ -208,7 +208,7 @@ def process_one(input_path, output_path, mode, opts, progress_callback=None):
 
 @app.route("/")
 def index():
-    return render_template("index.html")
+    return render_template("index.html", cta_effects_no_gif=list(CTA_EFFECTS_NO_GIF))
 
 
 @app.route("/detect-text", methods=["POST"])
@@ -483,20 +483,21 @@ def process():
                 stem = Path(secure_filename(file.filename)).stem
                 orig_name = secure_filename(file.filename)
                 input_path = cta_tmpdir / orig_name
-                img_ref = f"{stem}_cta.gif" if cta_output == "both" else f"{stem}_cta.png"
                 if cta_output in ("gif", "both"):
-                    gif_path = cta_tmpdir / f"{stem}_cta.gif"
+                    gif_name = CODE_IMG_PLACEHOLDER_GIF if cta_output == "both" else f"{stem}_cta.gif"
+                    gif_path = cta_tmpdir / gif_name
                     generate_gif(str(input_path), cta_effect, str(gif_path))
-                    outputs.append(("gif", f"{stem}_cta.gif", gif_path))
+                    outputs.append(("gif", gif_name, gif_path))
                 if cta_output in ("code", "both"):
-                    code_str = generate_code(str(input_path), cta_effect, img_ref)
+                    img_placeholder = CODE_IMG_PLACEHOLDER_GIF if cta_output == "both" else CODE_IMG_PLACEHOLDER
+                    code_str = generate_code(str(input_path), cta_effect, img_placeholder)
                     html_path = cta_tmpdir / f"{stem}_cta.html"
                     html_path.write_text(code_str, encoding="utf-8")
                     outputs.append(("code", f"{stem}_cta.html", html_path))
                     if cta_output == "code":
-                        img_copy = cta_tmpdir / img_ref
+                        img_copy = cta_tmpdir / CODE_IMG_PLACEHOLDER
                         shutil.copy(input_path, img_copy)
-                        outputs.append(("img", img_ref, img_copy))
+                        outputs.append(("img", CODE_IMG_PLACEHOLDER, img_copy))
 
             if cta_output == "both" or len(outputs) > 1:
                 zip_buffer = BytesIO()
