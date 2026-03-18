@@ -1372,6 +1372,20 @@
       object-fit: contain;
       cursor: zoom-in;
     }
+    .result-preview-rendered {
+      max-width: 100%;
+      max-height: 360px;
+      overflow: auto;
+      background: var(--bg);
+      border-radius: 8px;
+      border: 1px solid var(--border);
+    }
+    .result-preview-rendered iframe {
+      display: block;
+      width: 100%;
+      min-height: 200px;
+      border: none;
+    }
 
     .preview-zoom-overlay {
       display: none;
@@ -1855,6 +1869,23 @@
               <option value="cursor_glow">カーソルグロー（カーソルに光追従・JS）</option>
             </select>
           </div>
+          <div class="options-form-row" style="flex-wrap: wrap; gap: 1rem;">
+            <div class="form-group">
+              <label>スピード（秒）</label>
+              <input type="number" name="cta_speed" id="ctaSpeedInput" min="0.3" max="5" step="0.1" value="1.5" style="width: 5rem;">
+              <span class="form-hint" style="margin-left: 0.25rem;">0.3〜5秒/周期</span>
+            </div>
+            <div class="form-group">
+              <label>強さ（振幅）</label>
+              <input type="number" name="cta_strength" id="ctaStrengthInput" min="0.2" max="2" step="0.1" value="1" style="width: 5rem;">
+              <span class="form-hint" style="margin-left: 0.25rem;">0.2〜2倍</span>
+            </div>
+            <div class="form-group">
+              <label>ループ間隔（秒）</label>
+              <input type="number" name="cta_loop" id="ctaLoopInput" min="0" max="10" step="0.5" value="0" style="width: 5rem;">
+              <span class="form-hint" style="margin-left: 0.25rem;">0=常に動く、1以上=動いたあとこの秒数静止</span>
+            </div>
+          </div>
           <div class="form-group">
             <label>出力形式</label>
             <div id="ctaOutputOptions" class="options-form-row" style="flex-wrap: wrap; gap: 0.5rem;">
@@ -1874,7 +1905,8 @@
             <p id="ctaOutputHint" class="form-hint">CTA ボタンやバナー画像に動きを付けます。GIF はそのまま使え、コードは LP に組み込み可能です。</p>
           </div>
           <div id="ctaPreviewWrap" class="cta-preview-wrap" style="display: none;">
-            <div class="cta-preview-label">プレビュー（選択した効果をリアルタイム表示・リップルはクリックで波紋）</div>
+            <style id="ctaPreviewDynamicStyle"></style>
+            <div class="cta-preview-label">プレビュー</div>
             <div id="ctaPreviewInner" class="cta-preview-inner">
               <img id="ctaPreviewImg" src="" alt="CTA プレビュー">
             </div>
@@ -1946,6 +1978,9 @@
           <div class="result-preview-label">プレビュー <span class="hint">（クリックで拡大）</span></div>
           <div class="result-preview-wrap" id="resultPreviewWrap">
             <img id="resultPreviewImg" src="" alt="結果プレビュー">
+            <div id="resultPreviewRendered" class="result-preview-rendered" style="display: none;">
+              <iframe id="resultPreviewIframe" sandbox="allow-same-origin" title="生成コードのプレビュー"></iframe>
+            </div>
             <div id="resultPreviewNonImage" class="result-preview-nonimage" style="display: none;">
               <p class="result-preview-nonimage-msg">生成されたコード</p>
               <p class="result-preview-nonimage-hint form-hint">ZIPが必要な場合は保存ボタンからダウンロードしてください。</p>
@@ -2023,6 +2058,7 @@
     let currentPipelineEvtSource = null;
     let isCancelled = false;
     let resultPreviewUrl = null;
+    let resultPreviewRenderedUrl = null;
     let processingElapsedInterval = null;
 
     const MODE_LABELS = { upscale: '拡大', convert: '形式変換', optimize: '軽量化', removebg: '背景削除', crop: 'トリミング', textedit: 'テキスト編集', cta: 'CTAアニメーション', pipeline: 'パイプライン' };
@@ -2186,15 +2222,23 @@
       const el = document.getElementById('resultPreview');
       el.classList.remove('visible');
       const img = document.getElementById('resultPreviewImg');
+      const rendered = document.getElementById('resultPreviewRendered');
       const nonImg = document.getElementById('resultPreviewNonImage');
-      if (img) {
-        img.src = '';
-        img.style.display = '';
-      }
+      const iframe = document.getElementById('resultPreviewIframe');
+      if (img) { img.src = ''; img.style.display = ''; }
+      if (rendered) rendered.style.display = 'none';
+      if (iframe) iframe.srcdoc = '';
       if (nonImg) nonImg.style.display = 'none';
       if (resultPreviewUrl) {
         URL.revokeObjectURL(resultPreviewUrl);
         resultPreviewUrl = null;
+      }
+      if (resultPreviewRenderedUrl) {
+        URL.revokeObjectURL(resultPreviewRenderedUrl);
+        resultPreviewRenderedUrl = null;
+      }
+      if (modeInput.value === 'cta' && fileInput.files.length) {
+        updateCtaPreview();
       }
     }
 
@@ -2210,10 +2254,23 @@
         img.src = resultPreviewUrl;
         img.style.display = '';
         if (nonImg) nonImg.style.display = 'none';
+        if (modeInput.value === 'cta') {
+          const ctaImg = document.getElementById('ctaPreviewImg');
+          const ctaInner = document.getElementById('ctaPreviewInner');
+          const ctaStyle = document.getElementById('ctaPreviewDynamicStyle');
+          if (ctaImg && ctaInner) {
+            if (ctaImg._ctaUrl) { URL.revokeObjectURL(ctaImg._ctaUrl); ctaImg._ctaUrl = null; }
+            ctaImg.src = resultPreviewUrl;
+            ctaInner.className = 'cta-preview-inner';
+            if (ctaStyle) ctaStyle.textContent = '';
+          }
+        }
       } else {
         img.src = '';
         img.style.display = 'none';
         resultPreviewUrl = null;
+        const rendered = document.getElementById('resultPreviewRendered');
+        const iframe = document.getElementById('resultPreviewIframe');
         if (nonImg) {
           nonImg.style.display = 'block';
           const msg = nonImg.querySelector('.result-preview-nonimage-msg');
@@ -2226,15 +2283,23 @@
           if (hint) hint.textContent = canCopy ? 'ZIPが必要な場合は保存ボタンからダウンロードしてください。' : '保存ボタンをクリックしてダウンロードしてください。';
           if (codeWrap) codeWrap.style.display = 'none';
           if (copyBtn) copyBtn.style.display = 'none';
+          if (rendered) rendered.style.display = 'none';
           if (canCopy) {
             (async () => {
               try {
                 let html = '';
+                let imgUrl = document.getElementById('ctaPreviewImg')?.src || '';
                 if (blob.type === 'text/html') {
                   html = await blob.text();
                 } else if (filename && filename.endsWith('.zip')) {
                   const zip = await JSZip.loadAsync(blob);
                   const htmlFiles = Object.keys(zip.files).filter(n => n.toLowerCase().endsWith('.html'));
+                  const gifEntry = zip.files['YOUR_IMAGE.gif'] || zip.files['your_image.gif'];
+                  if (gifEntry && !gifEntry.dir) {
+                    const gifBlob = await gifEntry.async('blob');
+                    if (resultPreviewRenderedUrl) URL.revokeObjectURL(resultPreviewRenderedUrl);
+                    imgUrl = resultPreviewRenderedUrl = URL.createObjectURL(gifBlob);
+                  }
                   if (htmlFiles.length) {
                     const first = zip.file(htmlFiles[0]);
                     html = await first.async('string');
@@ -2244,6 +2309,11 @@
                   codeEl.textContent = html;
                   codeWrap.style.display = 'block';
                   copyBtn.style.display = 'inline-block';
+                  if (imgUrl && rendered && iframe) {
+                    const modHtml = html.replace(/YOUR_IMAGE\.png/gi, imgUrl).replace(/YOUR_IMAGE\.gif/gi, imgUrl);
+                    iframe.srcdoc = modHtml;
+                    rendered.style.display = 'block';
+                  }
                 }
               } catch (_) {}
             })();
@@ -2358,12 +2428,118 @@
         : 'CTA ボタンやバナー画像に動きを付けます。GIF はそのまま使え、コードは LP に組み込み可能です。';
     }
 
-    // CTA アニメーション: プレビュー
+    // CTA アニメーション: プレビュー（スピード・強さ・ループをリアルタイム反映）
+    function getCtaPreviewParams() {
+      const speedEl = document.getElementById('ctaSpeedInput');
+      const strengthEl = document.getElementById('ctaStrengthInput');
+      const loopEl = document.getElementById('ctaLoopInput');
+      const speed = Math.max(0.3, Math.min(5, parseFloat(speedEl?.value || 1.5) || 1.5));
+      const strength = Math.max(0.2, Math.min(2, parseFloat(strengthEl?.value || 1) || 1));
+      const loop = Math.max(0, Math.min(10, parseFloat(loopEl?.value || 0) || 0));
+      return { speed, strength, loop };
+    }
+    function buildCtaPreviewCss(effect, speed, strength, loop) {
+      const mult = Math.max(0.2, Math.min(2, strength));
+      const _amp = v => v === 1 ? 1 : 1 + (v - 1) * mult;
+      const _px = v => Math.round(v * mult) + 'px';
+      const _deg = v => (v * mult).toFixed(1) + 'deg';
+      const useInterval = loop > 0;
+      const totalSec = useInterval ? speed + loop : speed;
+      const dur = totalSec + 's';
+      const end = useInterval ? (speed / totalSec) * 100 : 100;
+      const mid = end / 2, end4 = end / 4, end34 = end * 3 / 4;
+      const end14 = end * 14 / 100, end28 = end * 28 / 100, end42 = end * 42 / 100;
+      const end56 = end * 56 / 100, end10 = end * 10 / 100, end20 = end * 20 / 100;
+      const end30 = end * 30 / 100, end65 = end * 65 / 100;
+      const s_pulse = _amp(1.05), b_pulse = _amp(1.1);
+      const glow_peak = 4 + Math.round(8 * mult);
+      const bounce_px = _px(8), shake_px = _px(4), float_px = _px(6);
+      const wiggle_deg = _deg(2), fade_op = (1 - 0.25 * mult).toFixed(2);
+      const rotate_deg = _deg(5), swing_deg = _deg(8);
+      const hb_p1 = _amp(1.08), hb_p2 = _amp(1.04);
+      const rubber_p1 = _amp(1.08), rubber_p2 = (1 / rubber_p1).toFixed(2);
+      const breathe_lo = _amp(0.97), breathe_hi = _amp(1.03);
+      const att_p = _amp(1.12), tilt_deg = _deg(5), tilt_px = _px(8);
+      const kf = (name, body) => `@keyframes cta-preview-dyn-${name}{${body}}`;
+      const anim = (name, easing) => `#ctaPreviewInner.cta-effect-${effect}{animation:cta-preview-dyn-${name} ${dur} ${easing} infinite}`;
+      const effects = {
+        pulse: () => anim('pulse','ease-in-out') + kf('pulse', useInterval
+          ? `0%{transform:scale(1);filter:brightness(1)}${mid}%{transform:scale(${s_pulse});filter:brightness(${b_pulse})}${end}%,100%{transform:scale(1);filter:brightness(1)}`
+          : `0%,100%{transform:scale(1);filter:brightness(1)}50%{transform:scale(${s_pulse});filter:brightness(${b_pulse})}`),
+        glow: () => anim('glow','ease-in-out') + kf('glow', useInterval
+          ? `0%{filter:drop-shadow(0 0 4px rgba(255,255,255,.5))}${mid}%{filter:drop-shadow(0 0 ${glow_peak}px rgba(255,255,255,.9))}${end}%,100%{filter:drop-shadow(0 0 4px rgba(255,255,255,.5))}`
+          : `0%,100%{filter:drop-shadow(0 0 4px rgba(255,255,255,.5))}50%{filter:drop-shadow(0 0 ${glow_peak}px rgba(255,255,255,.9))}`),
+        bounce: () => anim('bounce','ease-in-out') + kf('bounce', useInterval
+          ? `0%{transform:translateY(0)}${mid}%{transform:translateY(-${bounce_px})}${end}%,100%{transform:translateY(0)}`
+          : `0%,100%{transform:translateY(0)}50%{transform:translateY(-${bounce_px})}`),
+        shake: () => anim('shake','ease-in-out') + kf('shake', useInterval
+          ? `0%{transform:translateX(0)}${end4.toFixed(1)}%{transform:translateX(-${shake_px})}${end34.toFixed(1)}%{transform:translateX(${shake_px})}${end.toFixed(1)}%,100%{transform:translateX(0)}`
+          : `0%,100%{transform:translateX(0)}25%{transform:translateX(-${shake_px})}75%{transform:translateX(${shake_px})}`),
+        float: () => anim('float','ease-in-out') + kf('float', useInterval
+          ? `0%{transform:translateY(0)}${mid}%{transform:translateY(-${float_px})}${end}%,100%{transform:translateY(0)}`
+          : `0%,100%{transform:translateY(0)}50%{transform:translateY(-${float_px})}`),
+        wiggle: () => anim('wiggle','ease-in-out') + kf('wiggle', useInterval
+          ? `0%{transform:rotate(-${wiggle_deg})}${mid}%{transform:rotate(${wiggle_deg})}${end}%,100%{transform:rotate(-${wiggle_deg})}`
+          : `0%,100%{transform:rotate(-${wiggle_deg})}50%{transform:rotate(${wiggle_deg})}`),
+        fade: () => anim('fade','ease-in-out') + kf('fade', useInterval
+          ? `0%{opacity:1}${mid}%{opacity:${fade_op}}${end}%,100%{opacity:1}`
+          : `0%,100%{opacity:1}50%{opacity:${fade_op}}`),
+        rotate: () => anim('rotate','ease-in-out') + kf('rotate', useInterval
+          ? `0%{transform:rotate(-${rotate_deg})}${mid}%{transform:rotate(${rotate_deg})}${end}%,100%{transform:rotate(-${rotate_deg})}`
+          : `0%,100%{transform:rotate(-${rotate_deg})}50%{transform:rotate(${rotate_deg})}`),
+        swing: () => anim('swing','ease-in-out') + kf('swing', useInterval
+          ? `0%{transform:rotate(-${swing_deg})}${mid}%{transform:rotate(${swing_deg})}${end}%,100%{transform:rotate(-${swing_deg})}`
+          : `0%,100%{transform:rotate(-${swing_deg})}50%{transform:rotate(${swing_deg})}`),
+        heartbeat: () => anim('heartbeat','ease-out') + kf('heartbeat', useInterval
+          ? `0%{transform:scale(1)}${end14.toFixed(1)}%{transform:scale(${hb_p1})}${end28.toFixed(1)}%{transform:scale(1)}${end42.toFixed(1)}%{transform:scale(${hb_p2})}${end.toFixed(1)}%,100%{transform:scale(1)}`
+          : `0%,100%{transform:scale(1)}14%{transform:scale(${hb_p1})}28%{transform:scale(1)}42%{transform:scale(${hb_p2})}56%{transform:scale(1)}`),
+        rubber: () => anim('rubber','ease-in-out') + kf('rubber', useInterval
+          ? `0%{transform:scaleX(1) scaleY(1)}${end30.toFixed(1)}%{transform:scaleX(${rubber_p1}) scaleY(${rubber_p2})}${end65.toFixed(1)}%{transform:scaleX(${rubber_p2}) scaleY(${rubber_p1})}${end.toFixed(1)}%,100%{transform:scaleX(1) scaleY(1)}`
+          : `0%,100%{transform:scaleX(1) scaleY(1)}30%{transform:scaleX(${rubber_p1}) scaleY(${rubber_p2})}65%{transform:scaleX(${rubber_p2}) scaleY(${rubber_p1})}`),
+        breathe: () => anim('breathe','ease-in-out') + kf('breathe', useInterval
+          ? `0%{transform:scale(${breathe_lo})}${mid}%{transform:scale(${breathe_hi})}${end}%,100%{transform:scale(${breathe_lo})}`
+          : `0%,100%{transform:scale(${breathe_lo})}50%{transform:scale(${breathe_hi})}`),
+        attention: () => anim('attention','ease-out') + kf('attention', useInterval
+          ? `0%{transform:scale(1)}${end10.toFixed(1)}%{transform:scale(${att_p})}${end20.toFixed(1)}%{transform:scale(1)}${end.toFixed(1)}%,100%{transform:scale(1)}`
+          : `0%,100%{transform:scale(1)}10%{transform:scale(${att_p})}20%{transform:scale(1)}`),
+        tilt: () => anim('tilt','ease-in-out') + kf('tilt', useInterval
+          ? `0%{transform:perspective(400px) rotateX(-${tilt_deg}) translateY(0)}${mid}%{transform:perspective(400px) rotateX(-${tilt_deg}) translateY(-${tilt_px})}${end}%,100%{transform:perspective(400px) rotateX(-${tilt_deg}) translateY(0)}`
+          : `0%,100%{transform:perspective(400px) rotateX(-${tilt_deg}) translateY(0)}50%{transform:perspective(400px) rotateX(-${tilt_deg}) translateY(-${tilt_px})}`),
+        shine: () => {
+          const opacity = Math.min(0.9, 0.2 + 0.4 * mult).toFixed(2);
+          const midPct = (end / 2).toFixed(1);
+          const endPct = end.toFixed(1);
+          const kfBody = useInterval
+            ? `0%{left:-100%}${midPct}%{left:150%}${endPct}%,100%{left:-100%}`
+            : `0%{left:-100%}50%{left:150%}100%{left:150%}`;
+          return `#ctaPreviewInner.cta-effect-shine::after{animation:cta-preview-dyn-shine ${dur} ease-in-out infinite;background:linear-gradient(90deg,transparent,rgba(255,255,255,${opacity}),transparent)}` + kf('shine', kfBody);
+        },
+        magnetic: () => anim('pulse','ease-in-out') + kf('pulse', useInterval
+          ? `0%{transform:scale(1);filter:brightness(1)}${mid}%{transform:scale(${s_pulse});filter:brightness(${b_pulse})}${end}%,100%{transform:scale(1);filter:brightness(1)}`
+          : `0%,100%{transform:scale(1);filter:brightness(1)}50%{transform:scale(${s_pulse});filter:brightness(${b_pulse})}`),
+        parallax: () => anim('pulse','ease-in-out') + kf('pulse', useInterval
+          ? `0%{transform:scale(1);filter:brightness(1)}${mid}%{transform:scale(${s_pulse});filter:brightness(${b_pulse})}${end}%,100%{transform:scale(1);filter:brightness(1)}`
+          : `0%,100%{transform:scale(1);filter:brightness(1)}50%{transform:scale(${s_pulse});filter:brightness(${b_pulse})}`),
+        spotlight: () => anim('pulse','ease-in-out') + kf('pulse', useInterval
+          ? `0%{transform:scale(1);filter:brightness(1)}${mid}%{transform:scale(${s_pulse});filter:brightness(${b_pulse})}${end}%,100%{transform:scale(1);filter:brightness(1)}`
+          : `0%,100%{transform:scale(1);filter:brightness(1)}50%{transform:scale(${s_pulse});filter:brightness(${b_pulse})}`),
+        particle: () => anim('pulse','ease-in-out') + kf('pulse', useInterval
+          ? `0%{transform:scale(1);filter:brightness(1)}${mid}%{transform:scale(${s_pulse});filter:brightness(${b_pulse})}${end}%,100%{transform:scale(1);filter:brightness(1)}`
+          : `0%,100%{transform:scale(1);filter:brightness(1)}50%{transform:scale(${s_pulse});filter:brightness(${b_pulse})}`),
+        cursor_glow: () => anim('pulse','ease-in-out') + kf('pulse', useInterval
+          ? `0%{transform:scale(1);filter:brightness(1)}${mid}%{transform:scale(${s_pulse});filter:brightness(${b_pulse})}${end}%,100%{transform:scale(1);filter:brightness(1)}`
+          : `0%,100%{transform:scale(1);filter:brightness(1)}50%{transform:scale(${s_pulse});filter:brightness(${b_pulse})}`),
+        ripple: () => ''  // クリック専用・動的スタイルなし
+      };
+      const fn = effects[effect] || effects.pulse;
+      return fn ? fn() : '';
+    }
     function updateCtaPreview() {
       const wrap = document.getElementById('ctaPreviewWrap');
       const inner = document.getElementById('ctaPreviewInner');
       const img = document.getElementById('ctaPreviewImg');
       const effectSelect = document.getElementById('ctaEffectSelect');
+      const styleEl = document.getElementById('ctaPreviewDynamicStyle');
       if (!wrap || !inner || !img || !effectSelect) return;
       const imageFiles = [...fileInput.files].filter(f => !isVideoFile(f));
       if (!imageFiles.length || modeInput.value !== 'cta') {
@@ -2373,6 +2549,7 @@
           img._ctaUrl = null;
         }
         img.src = '';
+        if (styleEl) styleEl.textContent = '';
         return;
       }
       if (img._ctaUrl) URL.revokeObjectURL(img._ctaUrl);
@@ -2380,11 +2557,18 @@
       img.src = img._ctaUrl;
       const effect = effectSelect.value || 'pulse';
       inner.className = 'cta-preview-inner cta-effect-' + effect;
+      const { speed, strength, loop } = getCtaPreviewParams();
+      const css = buildCtaPreviewCss(effect, speed, strength, loop);
+      if (styleEl) styleEl.textContent = css;
       wrap.style.display = 'block';
     }
     document.getElementById('ctaEffectSelect')?.addEventListener('change', function() {
       updateCtaOutputOptions();
       updateCtaPreview();
+    });
+    ['ctaSpeedInput','ctaStrengthInput','ctaLoopInput'].forEach(id => {
+      document.getElementById(id)?.addEventListener('input', updateCtaPreview);
+      document.getElementById(id)?.addEventListener('change', updateCtaPreview);
     });
     document.getElementById('ctaPreviewInner')?.addEventListener('click', function(e) {
       if (document.getElementById('ctaEffectSelect')?.value !== 'ripple') return;
@@ -3900,6 +4084,9 @@
         data.append('mode', 'cta');
         data.append('cta_effect', document.querySelector('#optionsCta select[name="cta_effect"]')?.value || 'pulse');
         data.append('cta_output', document.querySelector('#optionsCta input[name="cta_output"]:checked')?.value || 'gif');
+        data.append('cta_speed', document.querySelector('#optionsCta input[name="cta_speed"]')?.value || '1.5');
+        data.append('cta_strength', document.querySelector('#optionsCta input[name="cta_strength"]')?.value || '1');
+        data.append('cta_loop', document.querySelector('#optionsCta input[name="cta_loop"]')?.value || '0');
         try {
           const controller = new AbortController();
           currentAbortController = controller;

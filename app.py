@@ -468,6 +468,18 @@ def process():
     if mode == "cta":
         cta_effect = request.form.get("cta_effect", "pulse")
         cta_output = request.form.get("cta_output", "gif")  # gif | code | both
+        try:
+            cta_speed = max(0.3, min(5.0, float(request.form.get("cta_speed", 1.5))))
+        except (ValueError, TypeError):
+            cta_speed = 1.5
+        try:
+            cta_strength = max(0.2, min(2.0, float(request.form.get("cta_strength", 1))))
+        except (ValueError, TypeError):
+            cta_strength = 1.0
+        try:
+            cta_loop = max(0, min(10, float(request.form.get("cta_loop", 0))))
+        except (ValueError, TypeError):
+            cta_loop = 0
         if cta_effect not in EFFECTS:
             return jsonify({"error": f"無効なエフェクト: {cta_effect}"}), 400
         if cta_output not in ("gif", "code", "both"):
@@ -486,11 +498,11 @@ def process():
                 if cta_output in ("gif", "both"):
                     gif_name = CODE_IMG_PLACEHOLDER_GIF if cta_output == "both" else f"{stem}_cta.gif"
                     gif_path = cta_tmpdir / gif_name
-                    generate_gif(str(input_path), cta_effect, str(gif_path))
+                    generate_gif(str(input_path), cta_effect, str(gif_path), duration=cta_speed, loop_interval=(cta_loop > 0), loop_pause=cta_loop)
                     outputs.append(("gif", gif_name, gif_path))
                 if cta_output in ("code", "both"):
                     img_placeholder = CODE_IMG_PLACEHOLDER_GIF if cta_output == "both" else CODE_IMG_PLACEHOLDER
-                    code_str = generate_code(str(input_path), cta_effect, img_placeholder)
+                    code_str = generate_code(str(input_path), cta_effect, img_placeholder, speed=cta_speed, strength=cta_strength, loop=cta_loop)
                     html_path = cta_tmpdir / f"{stem}_cta.html"
                     html_path.write_text(code_str, encoding="utf-8")
                     outputs.append(("code", f"{stem}_cta.html", html_path))
